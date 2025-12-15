@@ -1,0 +1,3960 @@
+<!-- 전역 헤더 -->
+<div class="global-header" id="global-header">
+  <div class="header-logo" onclick="goToHome()">
+    <div class="logo-icon">🎵</div>
+    <div class="logo-text">
+      <div class="logo-title">K-POP Calendar</div>
+      <div class="logo-subtitle">올인원 일정 플랫폼</div>
+    </div>
+  </div>
+
+  <div class="header-auth-buttons" id="header-auth-buttons">
+    <button class="btn-login" onclick="showLogin()">로그인</button>
+    <button class="btn-signup" onclick="showSignup()">회원가입</button>
+  </div>
+
+  <div
+    style="display: none; align-items: center; gap: 16px"
+    id="header-user-menu"
+  >
+    <button
+      class="btn-login"
+      onclick="toggleNotificationPanel()"
+      style="position: relative; display: flex; align-items: center; gap: 6px"
+    >
+      🔔 알림
+      <span
+        id="notification-badge"
+        style="
+          display: none;
+          position: absolute;
+          top: -4px;
+          right: -4px;
+          background: #ff1744;
+          color: white;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
+          font-size: 11px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        "
+        >0</span
+      >
+    </button>
+    <button
+      class="btn-login"
+      onclick="goToChatsPage()"
+      style="display: flex; align-items: center; gap: 6px"
+    >
+      💬 채팅방
+    </button>
+    <div class="header-profile" onclick="goToMyPage()">
+      <div class="profile-icon">👤</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- 온보딩 화면 -->
+  <div id="onboarding" class="screen active">
+    <!-- 온보딩 전용 헤더 -->
+    <div class="onboarding-header">
+      <div class="header-logo">
+        <div class="logo-icon">🎵</div>
+        <div class="logo-text">
+          <div class="logo-title">K-POP Calendar</div>
+          <div class="logo-subtitle">올인원 일정 플랫폼</div>
+        </div>
+      </div>
+
+      <div class="onboarding-header-buttons">
+        <button class="btn-login" onclick="showLogin()">로그인</button>
+        <button class="btn-signup" onclick="showSignup()">회원가입</button>
+      </div>
+    </div>
+
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        padding: 40px;
+      "
+    >
+      <div
+        style="
+          background: white;
+          border-radius: 24px;
+          padding: 48px;
+          max-width: 700px;
+          width: 100%;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        "
+      >
+        <div style="text-align: center; margin-bottom: 40px">
+          <h1
+            style="
+              font-size: 32px;
+              font-weight: 800;
+              color: #222;
+              margin-bottom: 12px;
+            "
+          >
+            좋아하는 아이돌을 선택해주세요!
+          </h1>
+          <p style="font-size: 16px; color: #666">맞춤 일정을 추천해드릴게요</p>
+        </div>
+
+        <div class="onboarding-grid">
+          <div class="onboarding-artist" data-artist="BTS">
+            <div class="onboarding-avatar">BTS</div>
+            <div class="onboarding-name">BTS</div>
+          </div>
+          <div class="onboarding-artist" data-artist="BLACKPINK">
+            <div class="onboarding-avatar">BP</div>
+            <div class="onboarding-name">BLACKPINK</div>
+          </div>
+          <div class="onboarding-artist" data-artist="NewJeans">
+            <div class="onboarding-avatar">NJ</div>
+            <div class="onboarding-name">NewJeans</div>
+          </div>
+          <div class="onboarding-artist" data-artist="aespa">
+            <div class="onboarding-avatar">æ</div>
+            <div class="onboarding-name">aespa</div>
+          </div>
+          <div class="onboarding-artist" data-artist="SEVENTEEN">
+            <div class="onboarding-avatar">SVT</div>
+            <div class="onboarding-name">SEVENTEEN</div>
+          </div>
+          <div class="onboarding-artist" data-artist="IVE">
+            <div class="onboarding-avatar">IVE</div>
+            <div class="onboarding-name">IVE</div>
+          </div>
+          <div class="onboarding-artist" data-artist="TWICE">
+            <div class="onboarding-avatar">TW</div>
+            <div class="onboarding-name">TWICE</div>
+          </div>
+          <div class="onboarding-artist" data-artist="Stray Kids">
+            <div class="onboarding-avatar">SKZ</div>
+            <div class="onboarding-name">Stray Kids</div>
+          </div>
+          <div class="onboarding-artist" data-artist="LE SSERAFIM">
+            <div class="onboarding-avatar">LSF</div>
+            <div class="onboarding-name">LE SSERAFIM</div>
+          </div>
+          <div class="onboarding-artist" data-artist="(G)I-DLE">
+            <div class="onboarding-avatar">GID</div>
+            <div class="onboarding-name">(G)I-DLE</div>
+          </div>
+          <div class="onboarding-artist" data-artist="TXT">
+            <div class="onboarding-avatar">TXT</div>
+            <div class="onboarding-name">TXT</div>
+          </div>
+          <div class="onboarding-artist" data-artist="ENHYPEN">
+            <div class="onboarding-avatar">EN</div>
+            <div class="onboarding-name">ENHYPEN</div>
+          </div>
+          <div class="onboarding-artist" data-artist="Red Velvet">
+            <div class="onboarding-avatar">RV</div>
+            <div class="onboarding-name">Red Velvet</div>
+          </div>
+          <div class="onboarding-artist" data-artist="NCT">
+            <div class="onboarding-avatar">NCT</div>
+            <div class="onboarding-name">NCT</div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px">
+          <p style="font-size: 14px; color: #999; margin-bottom: 16px">
+            <span id="selected-count">0</span>개 선택됨
+          </p>
+          <button
+            class="btn btn-primary"
+            id="start-btn"
+            style="
+              padding: 16px 48px;
+              font-size: 16px;
+              opacity: 0.5;
+              cursor: not-allowed;
+            "
+            disabled
+          >
+            선택 완료 →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. 통합 캘린더 화면 -->
+  <div id="calendar" class="screen">
+    <div class="main-content" style="margin-left: 0; padding-top: 88px">
+      <div class="content-header">
+        <h1>K-POP 통합 캘린더</h1>
+        <div class="header-actions">
+          <button class="btn btn-primary" onclick="goToArtistsPage()">
+            내 아티스트 관리
+          </button>
+        </div>
+      </div>
+
+      <div class="artist-filter-chips">
+        <div class="filter-chip active" data-artist="all">전체</div>
+        <div class="filter-chip" data-artist="BTS">
+          <div class="chip-logo">BTS</div>
+          BTS
+        </div>
+        <div class="filter-chip" data-artist="BLACKPINK">
+          <div class="chip-logo" style="background: #f06292">BP</div>
+          BLACKPINK
+        </div>
+        <div class="filter-chip" data-artist="NewJeans">
+          <div class="chip-logo" style="background: #64b5f6">NJ</div>
+          NewJeans
+        </div>
+        <div class="filter-chip" data-artist="aespa">
+          <div class="chip-logo" style="background: #9575cd">æ</div>
+          aespa
+        </div>
+        <div class="filter-chip" data-artist="SEVENTEEN">
+          <div class="chip-logo" style="background: #4fc3f7">SVT</div>
+          SEVENTEEN
+        </div>
+        <div class="filter-chip-more" onclick="goToArtistsPage()">+ 더보기</div>
+      </div>
+
+      <div class="calendar-event-grid">
+        <div class="calendar-section">
+          <div class="calendar">
+            <div class="calendar-header">
+              <h2 style="font-size: 20px">2025년 11월</h2>
+              <div class="calendar-nav">
+                <button>◀</button>
+                <button>오늘</button>
+                <button>▶</button>
+              </div>
+            </div>
+
+            <div class="calendar-grid">
+              <div class="calendar-day-header">일</div>
+              <div class="calendar-day-header">월</div>
+              <div class="calendar-day-header">화</div>
+              <div class="calendar-day-header">수</div>
+              <div class="calendar-day-header">목</div>
+              <div class="calendar-day-header">금</div>
+              <div class="calendar-day-header">토</div>
+
+              <div class="calendar-day">
+                <div class="day-number">1</div>
+                <div class="day-events">
+                  <div class="event-item broadcast">뮤직뱅크 - aespa</div>
+                </div>
+              </div>
+              <div class="calendar-day">
+                <div class="day-number">2</div>
+                <div class="day-events">
+                  <div class="event-item concert">콘서트 - BTS</div>
+                </div>
+              </div>
+              <div class="calendar-day"><div class="day-number">3</div></div>
+              <div class="calendar-day">
+                <div class="day-number">4</div>
+                <div class="day-events">
+                  <div class="event-item fansign">팬미팅 - NewJeans</div>
+                </div>
+              </div>
+              <div class="calendar-day"><div class="day-number">5</div></div>
+              <div class="calendar-day">
+                <div class="day-number">6</div>
+                <div class="day-events">
+                  <div class="event-item broadcast">인기가요 - SEVENTEEN</div>
+                </div>
+              </div>
+              <div class="calendar-day"><div class="day-number">7</div></div>
+              <div class="calendar-day">
+                <div class="day-number">8</div>
+                <div class="day-events">
+                  <div class="event-item concert">월드투어 - BLACKPINK</div>
+                </div>
+              </div>
+              <div class="calendar-day"><div class="day-number">9</div></div>
+              <div class="calendar-day">
+                <div class="day-number">10</div>
+                <div class="day-events">
+                  <div class="event-item broadcast">뮤직뱅크 - aespa</div>
+                  <div class="event-item fansign">팬미팅 - IVE</div>
+                </div>
+              </div>
+              <div class="calendar-day"><div class="day-number">11</div></div>
+              <div class="calendar-day"><div class="day-number">12</div></div>
+              <div class="calendar-day">
+                <div class="day-number">13</div>
+                <div class="day-events">
+                  <div class="event-item concert">단독콘서트 - NewJeans</div>
+                </div>
+              </div>
+              <div class="calendar-day"><div class="day-number">14</div></div>
+              <div class="calendar-day"><div class="day-number">15</div></div>
+              <div class="calendar-day"><div class="day-number">16</div></div>
+              <div class="calendar-day"><div class="day-number">17</div></div>
+              <div class="calendar-day">
+                <div class="day-number">18</div>
+                <div class="day-events">
+                  <div class="event-item birthday">🎂 지민 생일</div>
+                </div>
+              </div>
+              <div class="calendar-day"><div class="day-number">19</div></div>
+              <div class="calendar-day"><div class="day-number">20</div></div>
+              <div class="calendar-day"><div class="day-number">21</div></div>
+              <div class="calendar-day"><div class="day-number">22</div></div>
+              <div class="calendar-day"><div class="day-number">23</div></div>
+              <div class="calendar-day"><div class="day-number">24</div></div>
+              <div class="calendar-day"><div class="day-number">25</div></div>
+              <div class="calendar-day"><div class="day-number">26</div></div>
+              <div class="calendar-day"><div class="day-number">27</div></div>
+              <div class="calendar-day"><div class="day-number">28</div></div>
+              <div class="calendar-day"><div class="day-number">29</div></div>
+              <div class="calendar-day"><div class="day-number">30</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="upcoming-events-section">
+          <h2
+            style="
+              font-size: 18px;
+              font-weight: 700;
+              margin-bottom: 16px;
+              color: #222;
+            "
+          >
+            다가오는 이벤트
+          </h2>
+
+          <div class="upcoming-event-list">
+            <div class="upcoming-event-card">
+              <div class="upcoming-event-header">
+                <span class="event-type-badge concert">콘서트</span>
+                <span style="font-size: 12px; color: #999">D-18</span>
+              </div>
+              <h3 class="upcoming-event-title">BTS WORLD TOUR 2025</h3>
+              <div class="upcoming-event-info">
+                <div>📅 2025년 12월 15일 (일) 18:00</div>
+                <div>📍 서울 잠실종합운동장 주경기장</div>
+                <div>💰 99,000원 ~ 220,000원</div>
+              </div>
+              <div class="upcoming-event-actions">
+                <button class="btn btn-primary btn-sm">예매하기</button>
+                <button class="btn btn-outline btn-sm">파티 찾기</button>
+              </div>
+            </div>
+
+            <div class="upcoming-event-card">
+              <div class="upcoming-event-header">
+                <span class="event-type-badge fansign">팬미팅</span>
+                <span style="font-size: 12px; color: #999">D-8</span>
+              </div>
+              <h3 class="upcoming-event-title">
+                NewJeans 미니 3집 발매 팬사인회
+              </h3>
+              <div class="upcoming-event-info">
+                <div>📅 2025년 12월 5일 (토) 14:00</div>
+                <div>📍 서울 광진구 예스24 라이브홀</div>
+                <div>💰 앨범 구매 후 추첨</div>
+              </div>
+              <div class="upcoming-event-actions">
+                <button class="btn btn-primary btn-sm">응모하기</button>
+                <button class="btn btn-outline btn-sm">파티 찾기</button>
+              </div>
+            </div>
+
+            <div class="upcoming-event-card">
+              <div class="upcoming-event-header">
+                <span class="event-type-badge broadcast">방송</span>
+                <span style="font-size: 12px; color: #999">D-2</span>
+              </div>
+              <h3 class="upcoming-event-title">뮤직뱅크 - aespa 컴백 무대</h3>
+              <div class="upcoming-event-info">
+                <div>📅 2025년 11월 29일 (금) 17:00</div>
+                <div>📍 KBS 뮤직뱅크 (서울 여의도)</div>
+                <div>💰 무료 (사전 신청 필요)</div>
+              </div>
+              <div class="upcoming-event-actions">
+                <button class="btn btn-primary btn-sm">신청하기</button>
+                <button class="btn btn-outline btn-sm">파티 찾기</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 아티스트 화면 -->
+  <div id="artists" class="screen">
+    <div class="header" style="margin-top: 88px">
+      <h1>K-POP 아티스트</h1>
+    </div>
+
+    <div style="margin-bottom: 32px">
+      <h2
+        style="
+          font-size: 20px;
+          font-weight: 700;
+          margin-bottom: 16px;
+          color: #222;
+        "
+      >
+        ⭐ 내가 팔로우 중인 아티스트
+      </h2>
+      <p style="color: #666; font-size: 14px; margin-bottom: 24px">
+        팔로우한 아티스트의 일정이 캘린더에 표시됩니다 (총
+        <span id="following-count-main" style="color: #ff1744; font-weight: 700"
+          >0</span
+        >명)
+      </p>
+
+      <div class="artist-grid" id="following-artists-grid-main"></div>
+
+      <div
+        id="no-following-main"
+        style="
+          text-align: center;
+          padding: 60px 20px;
+          background: #f9f9f9;
+          border-radius: 12px;
+          display: none;
+        "
+      >
+        <div style="font-size: 48px; margin-bottom: 16px">😢</div>
+        <p style="color: #999; font-size: 16px">
+          아직 팔로우 중인 아티스트가 없습니다
+        </p>
+        <p style="color: #999; font-size: 14px; margin-top: 8px">
+          아래에서 좋아하는 아티스트를 추가해보세요!
+        </p>
+      </div>
+    </div>
+
+    <div style="border-top: 2px solid #f0f0f0; padding-top: 32px">
+      <h2
+        style="
+          font-size: 20px;
+          font-weight: 700;
+          margin-bottom: 24px;
+          color: #222;
+        "
+      >
+        🔍 모든 아티스트
+      </h2>
+
+      <div class="artist-grid" id="all-artists-grid-main"></div>
+    </div>
+  </div>
+
+  <!-- 3-1. 공연 상세 / 날짜·회차 선택 화면 -->
+  <div id="event-detail" class="screen">
+    <div class="header" style="margin-top: 88px">
+      <h1>공연 상세</h1>
+      <button class="btn btn-outline" onclick="goToHome()">← 뒤로가기</button>
+    </div>
+
+    <div style="max-width: 1000px; margin: 0 auto">
+      <div style="display: grid; grid-template-columns: 300px 1fr; gap: 32px">
+        <!-- 왼쪽: 포스터 -->
+        <div>
+          <div
+            style="
+              width: 100%;
+              aspect-ratio: 2/3;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-size: 48px;
+              font-weight: 800;
+            "
+          >
+            🎵
+          </div>
+        </div>
+
+        <!-- 오른쪽: 공연 정보 -->
+        <div>
+          <h2 style="font-size: 28px; font-weight: 800; margin-bottom: 16px">
+            BTS WORLD TOUR 2025
+          </h2>
+          <div
+            style="
+              background: #f9f9f9;
+              padding: 20px;
+              border-radius: 12px;
+              margin-bottom: 24px;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                font-size: 14px;
+              "
+            >
+              <div><strong>장소:</strong> 서울 잠실종합운동장 주경기장</div>
+              <div><strong>공연기간:</strong> 2025.12.10 ~ 2025.12.20</div>
+              <div><strong>공연시간:</strong> 165분 (인터미션 20분 포함)</div>
+              <div><strong>관람연령:</strong> 14세 이상 관람가</div>
+              <div>
+                <strong>가격:</strong> VIP석 170,000원 / R석 140,000원 / S석
+                110,000원 / A석 80,000원
+              </div>
+            </div>
+          </div>
+
+          <!-- 날짜 선택 -->
+          <div style="margin-bottom: 24px">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px">
+              📅 날짜 선택
+            </h3>
+            <select
+              id="booking-date"
+              class="filter-input"
+              onchange="updateTimeSlots()"
+            >
+              <option value="">날짜를 선택하세요</option>
+              <option value="2025-12-15">2025년 12월 15일 (일)</option>
+              <option value="2025-12-16">2025년 12월 16일 (월)</option>
+              <option value="2025-12-17">2025년 12월 17일 (화)</option>
+            </select>
+          </div>
+
+          <!-- 회차 선택 -->
+          <div id="time-slots" style="margin-bottom: 24px; display: none">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px">
+              🕐 회차 선택
+            </h3>
+            <div
+              id="time-slot-buttons"
+              style="display: flex; flex-direction: column; gap: 12px"
+            >
+              <!-- 동적 생성 -->
+            </div>
+          </div>
+
+          <button
+            id="proceed-to-seats-btn"
+            class="btn btn-primary"
+            onclick="goToSeatSelection()"
+            style="width: 100%; padding: 16px; font-size: 16px; display: none"
+          >
+            좌석 선택하기 →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3-2. 좌석 섹션 선택 화면 -->
+  <div id="seat-section" class="screen">
+    <div class="header" style="margin-top: 88px">
+      <h1>좌석 선택 - 구역 선택</h1>
+      <button class="btn btn-outline" onclick="goToEventDetail()">
+        ← 뒤로가기
+      </button>
+    </div>
+
+    <div style="max-width: 900px; margin: 0 auto">
+      <!-- 대기 순번 표시 -->
+      <div
+        id="waiting-notice"
+        style="
+          background: #fff3e0;
+          padding: 16px;
+          border-radius: 12px;
+          margin-bottom: 24px;
+          display: none;
+        "
+      >
+        <div
+          style="
+            font-size: 16px;
+            font-weight: 700;
+            color: #f57c00;
+            margin-bottom: 8px;
+          "
+        >
+          ⏳ 대기 중입니다
+        </div>
+        <div style="font-size: 14px; color: #666">
+          현재 대기 순번:
+          <span
+            id="waiting-number"
+            style="font-weight: 700; color: #f57c00; font-size: 18px"
+            >0</span
+          >번
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-bottom: 32px">
+        <div
+          style="
+            background: #f9f9f9;
+            padding: 16px;
+            border-radius: 12px;
+            display: inline-block;
+          "
+        >
+          <div style="font-size: 14px; color: #666; margin-bottom: 8px">
+            STAGE
+          </div>
+          <div
+            style="
+              width: 200px;
+              height: 40px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              border-radius: 8px;
+            "
+          ></div>
+        </div>
+      </div>
+
+      <!-- 좌석 구역 맵 -->
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          margin-bottom: 32px;
+        "
+      >
+        <div></div>
+        <div
+          class="seat-section-btn"
+          data-section="VIP"
+          onclick="selectSeatSection('VIP')"
+          style="
+            background: #fff3e0;
+            border: 3px solid #f57c00;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+        >
+          <div
+            style="
+              font-size: 18px;
+              font-weight: 700;
+              color: #f57c00;
+              margin-bottom: 8px;
+            "
+          >
+            VIP석
+          </div>
+          <div style="font-size: 14px; color: #666">170,000원</div>
+          <div style="font-size: 12px; color: #999; margin-top: 8px">
+            잔여 136석
+          </div>
+        </div>
+        <div></div>
+
+        <div
+          class="seat-section-btn"
+          data-section="R"
+          onclick="selectSeatSection('R')"
+          style="
+            background: #fce4ec;
+            border: 3px solid #c2185b;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+        >
+          <div
+            style="
+              font-size: 18px;
+              font-weight: 700;
+              color: #c2185b;
+              margin-bottom: 8px;
+            "
+          >
+            R석
+          </div>
+          <div style="font-size: 14px; color: #666">140,000원</div>
+          <div style="font-size: 12px; color: #999; margin-top: 8px">
+            잔여 196석
+          </div>
+        </div>
+        <div
+          class="seat-section-btn"
+          data-section="S"
+          onclick="selectSeatSection('S')"
+          style="
+            background: #f3e5f5;
+            border: 3px solid #7b1fa2;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+        >
+          <div
+            style="
+              font-size: 18px;
+              font-weight: 700;
+              color: #7b1fa2;
+              margin-bottom: 8px;
+            "
+          >
+            S석
+          </div>
+          <div style="font-size: 14px; color: #666">110,000원</div>
+          <div style="font-size: 12px; color: #999; margin-top: 8px">
+            잔여 8석
+          </div>
+        </div>
+        <div
+          class="seat-section-btn"
+          data-section="A"
+          onclick="selectSeatSection('A')"
+          style="
+            background: #e3f2fd;
+            border: 3px solid #1976d2;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+        >
+          <div
+            style="
+              font-size: 18px;
+              font-weight: 700;
+              color: #1976d2;
+              margin-bottom: 8px;
+            "
+          >
+            A석
+          </div>
+          <div style="font-size: 14px; color: #666">80,000원</div>
+          <div style="font-size: 12px; color: #999; margin-top: 8px">
+            잔여 7석
+          </div>
+        </div>
+      </div>
+
+      <!-- 범례 -->
+      <div
+        style="
+          display: flex;
+          gap: 24px;
+          justify-content: center;
+          padding: 20px;
+          background: #f9f9f9;
+          border-radius: 12px;
+        "
+      >
+        <div style="display: flex; align-items: center; gap: 8px">
+          <div
+            style="
+              width: 20px;
+              height: 20px;
+              background: #e0e0e0;
+              border-radius: 4px;
+            "
+          ></div>
+          <span style="font-size: 13px">선택 가능</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <div
+            style="
+              width: 20px;
+              height: 20px;
+              background: #999;
+              border-radius: 4px;
+            "
+          ></div>
+          <span style="font-size: 13px">선택 불가</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <div
+            style="
+              width: 20px;
+              height: 20px;
+              background: #667eea;
+              border-radius: 4px;
+            "
+          ></div>
+          <span style="font-size: 13px">선택됨</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3-3. 상세 좌석 선택 화면 -->
+  <div id="seat-detail" class="screen">
+    <div class="header" style="margin-top: 88px">
+      <h1>좌석 선택 - <span id="selected-section-name">VIP석</span></h1>
+      <button class="btn btn-outline" onclick="goToSeatSection()">
+        ← 뒤로가기
+      </button>
+    </div>
+
+    <div style="max-width: 900px; margin: 0 auto">
+      <div
+        style="
+          background: #f9f9f9;
+          padding: 20px;
+          border-radius: 12px;
+          margin-bottom: 24px;
+        "
+      >
+        <div style="font-size: 14px; color: #666; margin-bottom: 8px">
+          선택한 좌석
+        </div>
+        <div
+          id="selected-seats-display"
+          style="font-size: 18px; font-weight: 700; color: #222"
+        >
+          좌석을 선택해주세요
+        </div>
+        <div
+          id="selected-price-display"
+          style="
+            font-size: 16px;
+            color: #ff1744;
+            margin-top: 8px;
+            font-weight: 600;
+          "
+        >
+          0원
+        </div>
+      </div>
+
+      <!-- 좌석 그리드 -->
+      <div style="text-align: center; margin-bottom: 16px">
+        <div
+          style="
+            background: #f0f0f0;
+            padding: 8px;
+            border-radius: 8px;
+            display: inline-block;
+            font-size: 12px;
+            color: #666;
+          "
+        >
+          STAGE
+        </div>
+      </div>
+
+      <div
+        id="seat-grid"
+        style="
+          display: grid;
+          grid-template-columns: repeat(12, 1fr);
+          gap: 8px;
+          margin-bottom: 32px;
+          justify-items: center;
+        "
+      >
+        <!-- 동적 생성 -->
+      </div>
+
+      <button
+        id="proceed-to-payment-btn"
+        class="btn btn-primary"
+        onclick="goToPayment()"
+        style="width: 100%; padding: 16px; font-size: 16px; display: none"
+      >
+        결제하기 →
+      </button>
+    </div>
+  </div>
+
+  <!-- 3-4. 결제 화면 -->
+  <div id="payment" class="screen">
+    <div class="header" style="margin-top: 88px">
+      <h1>결제</h1>
+      <button class="btn btn-outline" onclick="goToSeatDetail()">
+        ← 뒤로가기
+      </button>
+    </div>
+
+    <div style="max-width: 600px; margin: 0 auto">
+      <div
+        style="
+          background: white;
+          padding: 32px;
+          border-radius: 16px;
+          border: 2px solid #e0e0e0;
+        "
+      >
+        <!-- 예매 정보 -->
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px">
+          예매 정보
+        </h3>
+        <div
+          style="
+            background: #f9f9f9;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+          "
+        >
+          <div style="margin-bottom: 8px">
+            <strong>공연명:</strong> BTS WORLD TOUR 2025
+          </div>
+          <div style="margin-bottom: 8px">
+            <strong>날짜/시간:</strong> <span id="payment-datetime">-</span>
+          </div>
+          <div style="margin-bottom: 8px">
+            <strong>좌석:</strong> <span id="payment-seats">-</span>
+          </div>
+        </div>
+
+        <!-- 결제 정보 -->
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px">
+          결제 정보
+        </h3>
+        <div
+          style="
+            background: #f9f9f9;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+            "
+          >
+            <span>티켓금액</span>
+            <span id="payment-ticket-price">0원</span>
+          </div>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+            "
+          >
+            <span>수수료</span>
+            <span>3,700원</span>
+          </div>
+          <div
+            style="
+              border-top: 2px solid #e0e0e0;
+              margin: 12px 0;
+              padding-top: 12px;
+              display: flex;
+              justify-content: space-between;
+              font-size: 18px;
+              font-weight: 700;
+            "
+          >
+            <span>총 결제금액</span>
+            <span style="color: #ff1744" id="payment-total-price">0원</span>
+          </div>
+        </div>
+
+        <!-- 결제 수단 -->
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px">
+          결제 수단
+        </h3>
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              padding: 16px;
+              background: #f9f9f9;
+              border-radius: 8px;
+              cursor: pointer;
+              margin-bottom: 8px;
+            "
+          >
+            <input
+              type="radio"
+              name="payment-method"
+              value="card"
+              checked
+              style="margin-right: 12px"
+            />
+            <span>💳 신용/체크카드</span>
+          </label>
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              padding: 16px;
+              background: #f9f9f9;
+              border-radius: 8px;
+              cursor: pointer;
+            "
+          >
+            <input
+              type="radio"
+              name="payment-method"
+              value="kakaopay"
+              style="margin-right: 12px"
+            />
+            <span>💛 카카오페이</span>
+          </label>
+        </div>
+
+        <!-- 약관 동의 -->
+        <div style="margin-bottom: 24px; font-size: 13px">
+          <label
+            style="
+              display: flex;
+              align-items: start;
+              margin-bottom: 8px;
+              cursor: pointer;
+            "
+          >
+            <input
+              type="checkbox"
+              id="payment-agree-1"
+              style="margin-right: 8px; margin-top: 2px"
+            />
+            <span>취소 및 환불 규정을 확인하였으며 이에 동의합니다</span>
+          </label>
+          <label style="display: flex; align-items: start; cursor: pointer">
+            <input
+              type="checkbox"
+              id="payment-agree-2"
+              style="margin-right: 8px; margin-top: 2px"
+            />
+            <span>개인정보 제3자 제공에 동의합니다</span>
+          </label>
+        </div>
+
+        <button
+          class="btn btn-primary"
+          onclick="completePayment()"
+          style="width: 100%; padding: 16px; font-size: 16px"
+        >
+          결제하기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3-5. 예매 완료 화면 -->
+  <div id="payment-complete" class="screen">
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 40px;
+      "
+    >
+      <div
+        style="
+          background: white;
+          border-radius: 24px;
+          padding: 48px;
+          max-width: 500px;
+          width: 100%;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          text-align: center;
+        "
+      >
+        <div
+          style="
+            width: 80px;
+            height: 80px;
+            background: #4caf50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 40px;
+          "
+        >
+          ✓
+        </div>
+        <h2
+          style="
+            font-size: 28px;
+            font-weight: 800;
+            color: #222;
+            margin-bottom: 16px;
+          "
+        >
+          결제가 정상적으로<br />완료되었습니다
+        </h2>
+        <p style="font-size: 14px; color: #666; margin-bottom: 32px">
+          예매번호: <strong style="color: #222">M256834798</strong>
+        </p>
+
+        <div
+          style="
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: left;
+            margin-bottom: 32px;
+          "
+        >
+          <div style="margin-bottom: 12px">
+            <strong>공연명:</strong> BTS WORLD TOUR 2025
+          </div>
+          <div style="margin-bottom: 12px">
+            <strong>관람일시:</strong> <span id="complete-datetime">-</span>
+          </div>
+          <div style="margin-bottom: 12px">
+            <strong>좌석:</strong> <span id="complete-seats">-</span>
+          </div>
+          <div>
+            <strong>결제금액:</strong>
+            <span id="complete-price" style="color: #ff1744; font-weight: 700"
+              >-</span
+            >
+          </div>
+        </div>
+
+        <button
+          class="btn btn-primary"
+          onclick="goToHome()"
+          style="width: 100%; padding: 14px; margin-bottom: 12px"
+        >
+          홈으로 이동
+        </button>
+        <button
+          class="btn btn-outline"
+          onclick="showNotification('예매 내역은 마이페이지에서 확인할 수 있습니다')"
+          style="width: 100%; padding: 14px"
+        >
+          예매 내역 보기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 팬 파티 매칭 화면 -->
+  <div id="party" class="screen">
+    <div class="header" style="margin-top: 88px">
+      <h1>팬 파티 매칭</h1>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="goToMyPartiesPage()">
+          내 파티
+        </button>
+      </div>
+    </div>
+
+    <div
+      style="
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+      "
+    >
+      <div
+        style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px"
+      >
+        <select
+          class="filter-input"
+          style="
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+          "
+        >
+          <option>이벤트 선택</option>
+          <option>BTS 콘서트</option>
+          <option>NewJeans 팬사인회</option>
+          <option>aespa 뮤직뱅크</option>
+        </select>
+        <select
+          class="filter-input"
+          style="
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+          "
+        >
+          <option>파티 유형</option>
+          <option>전체</option>
+          <option>🚶 출발팟</option>
+          <option>🏠 복귀팟</option>
+        </select>
+        <select
+          class="filter-input"
+          style="
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+          "
+        >
+          <option>출발지/지역</option>
+          <option>서울</option>
+          <option>경기</option>
+          <option>부산</option>
+        </select>
+        <select
+          class="filter-input"
+          style="
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+          "
+        >
+          <option>이동 수단</option>
+          <option>전체</option>
+          <option>대중교통</option>
+          <option>카풀</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <div
+        style="
+          display: flex;
+          gap: 20px;
+          padding: 20px;
+          background: white;
+          border: 2px solid #e0e0e0;
+          border-radius: 12px;
+          transition: all 0.2s;
+        "
+      >
+        <div
+          style="
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 32px;
+            flex-shrink: 0;
+          "
+        >
+          👤
+        </div>
+        <div style="flex: 1">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: start;
+              margin-bottom: 12px;
+            "
+          >
+            <div>
+              <div style="font-size: 18px; font-weight: 700; color: #222">
+                지민이 최애 🎤
+              </div>
+              <div style="font-size: 13px; color: #999; margin-top: 4px">
+                푸바오 (여성 · 25세)
+              </div>
+            </div>
+            <span
+              style="
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 600;
+                background: #e3f2fd;
+                color: #1976d2;
+              "
+              >모집중 2/4</span
+            >
+          </div>
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              color: #666;
+              font-size: 14px;
+              margin-bottom: 12px;
+            "
+          >
+            <div>🚶 출발팟</div>
+            <div>🎫 BTS WORLD TOUR 2025</div>
+            <div>📍 강남역 → 잠실종합운동장</div>
+            <div>🚇 지하철 2호선 (12월 15일 오후 4시 출발)</div>
+            <div>💬 20대 여성분들 환영해요! 편하게 함께 가요~</div>
+          </div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 13px;
+              color: #666;
+            "
+          >
+            <div style="display: flex; margin-left: 8px"></div>
+          </div>
+        </div>
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            justify-content: center;
+          "
+        >
+          <button class="btn btn-primary">참여하기</button>
+        </div>
+      </div>
+
+      <div
+        style="
+          display: flex;
+          gap: 20px;
+          padding: 20px;
+          background: white;
+          border: 2px solid #e0e0e0;
+          border-radius: 12px;
+          transition: all 0.2s;
+        "
+      >
+        <div
+          style="
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 32px;
+            flex-shrink: 0;
+          "
+        >
+          👤
+        </div>
+        <div style="flex: 1">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: start;
+              margin-bottom: 12px;
+            "
+          >
+            <div>
+              <div style="font-size: 18px; font-weight: 700; color: #222">
+                아미 Forever 💜
+              </div>
+              <div style="font-size: 13px; color: #999; margin-top: 4px">
+                딩동댕 (남성 · 28세)
+              </div>
+            </div>
+            <span
+              style="
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 600;
+                background: #e3f2fd;
+                color: #1976d2;
+              "
+              >모집중 3/4</span
+            >
+          </div>
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              color: #666;
+              font-size: 14px;
+              margin-bottom: 12px;
+            "
+          >
+            <div>🚶 출발팟</div>
+            <div>🎫 BTS WORLD TOUR 2025</div>
+            <div>📍 수원 → 잠실종합운동장</div>
+            <div>🚗 카풀 (12월 15일 오후 3시 출발)</div>
+            <div>💬 수원 출발 카풀 하실 분! 주차비/기름값 n빵해요</div>
+          </div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 13px;
+              color: #666;
+            "
+          >
+            <div style="display: flex; margin-left: 8px"></div>
+          </div>
+        </div>
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            justify-content: center;
+          "
+        >
+          <button class="btn btn-primary">참여하기</button>
+        </div>
+      </div>
+
+      <div
+        style="
+          display: flex;
+          gap: 20px;
+          padding: 20px;
+          background: white;
+          border: 2px solid #e0e0e0;
+          border-radius: 12px;
+          transition: all 0.2s;
+        "
+      >
+        <div
+          style="
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 32px;
+            flex-shrink: 0;
+          "
+        >
+          👤
+        </div>
+        <div style="flex: 1">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: start;
+              margin-bottom: 12px;
+            "
+          >
+            <div>
+              <div style="font-size: 18px; font-weight: 700; color: #222">
+                토끼들과 함께 🐰
+              </div>
+              <div style="font-size: 13px; color: #999; margin-top: 4px">
+                열팬 (여성 · 22세)
+              </div>
+            </div>
+            <span
+              style="
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 600;
+                background: #e8f5e9;
+                color: #388e3c;
+              "
+              >모집완료 4/4</span
+            >
+          </div>
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              color: #666;
+              font-size: 14px;
+              margin-bottom: 12px;
+            "
+          >
+            <div>🏠 복귀팟</div>
+            <div>🎫 NewJeans 팬사인회</div>
+            <div>📍 예스24 라이브홀 → 홍대입구역</div>
+            <div>🚇 지하철 2호선 (12월 5일 오후 4시 출발)</div>
+            <div>
+              💬 NewJeans 팬사인회 끝나고 같이 복귀해요! 뉴진스 팬분들만~
+            </div>
+          </div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 13px;
+              color: #666;
+            "
+          >
+            <div style="display: flex; margin-left: 8px"></div>
+          </div>
+        </div>
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            justify-content: center;
+          "
+        >
+          <button class="btn btn-outline" disabled>모집완료</button>
+        </div>
+      </div>
+    </div>
+
+    <button
+      style="
+        position: fixed;
+        bottom: 32px;
+        right: 32px;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #ff1744;
+        color: white;
+        border: none;
+        font-size: 32px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(255, 23, 68, 0.4);
+        transition: all 0.2s;
+      "
+      title="새 파티 만들기"
+      onclick="goToCreatePartyPage()"
+    >
+      +
+    </button>
+  </div>
+
+  <!-- 5. 새 팬 파티 만들기 화면 -->
+  <div id="create-party" class="screen">
+    <div class="header" style="margin-top: 88px">
+      <h1>새 팬 파티 만들기</h1>
+    </div>
+
+    <div style="max-width: 600px; margin: 0 auto">
+      <div
+        style="
+          background: white;
+          padding: 32px;
+          border-radius: 16px;
+          border: 2px solid #e0e0e0;
+        "
+      >
+        <h2
+          style="
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #222;
+          "
+        >
+          파티 정보를 입력해주세요
+        </h2>
+
+        <!-- 참여할 이벤트 -->
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+            "
+          >
+            참여할 이벤트 <span style="color: #ff1744">*</span>
+          </label>
+          <select class="filter-input" id="party-event" required>
+            <option value="">이벤트를 선택해주세요</option>
+            <option value="bts-concert">BTS WORLD TOUR 2025</option>
+            <option value="newjeans-fansign">
+              NewJeans 미니 3집 발매 팬사인회
+            </option>
+            <option value="aespa-music-bank">뮤직뱅크 - aespa 컴백 무대</option>
+          </select>
+        </div>
+
+        <!-- 파티 유형 추가 -->
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+            "
+          >
+            파티 유형 <span style="color: #ff1744">*</span>
+          </label>
+          <div style="display: flex; gap: 12px">
+            <label
+              style="
+                flex: 1;
+                padding: 16px;
+                border: 2px solid #e0e0e0;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+              "
+            >
+              <input
+                type="radio"
+                name="party-type"
+                value="departure"
+                checked
+                style="margin: 0"
+              />
+              <div>
+                <div
+                  style="
+                    font-weight: 600;
+                    font-size: 14px;
+                    color: #222;
+                    margin-bottom: 4px;
+                  "
+                >
+                  🚶 출발팟
+                </div>
+                <div style="font-size: 12px; color: #666">
+                  행사장으로 함께 출발
+                </div>
+              </div>
+            </label>
+            <label
+              style="
+                flex: 1;
+                padding: 16px;
+                border: 2px solid #e0e0e0;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+              "
+            >
+              <input
+                type="radio"
+                name="party-type"
+                value="return"
+                style="margin: 0"
+              />
+              <div>
+                <div
+                  style="
+                    font-weight: 600;
+                    font-size: 14px;
+                    color: #222;
+                    margin-bottom: 4px;
+                  "
+                >
+                  🏠 복귀팟
+                </div>
+                <div style="font-size: 12px; color: #666">
+                  행사 후 함께 복귀
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 파티 제목 -->
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+            "
+          >
+            파티 제목 <span style="color: #ff1744">*</span>
+          </label>
+          <input
+            type="text"
+            class="filter-input"
+            id="party-title"
+            placeholder="예: 지민이 최애와 함께 가요!"
+            maxlength="50"
+            required
+          />
+          <div style="font-size: 12px; color: #999; margin-top: 4px">
+            최대 50자
+          </div>
+        </div>
+
+        <!-- 파티 소개 -->
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+            "
+          >
+            파티 소개
+          </label>
+          <textarea
+            class="filter-input"
+            id="party-description"
+            placeholder="함께 가고 싶은 분들에게 자유롭게 소개해주세요"
+            rows="4"
+            maxlength="200"
+            style="resize: vertical; min-height: 100px"
+          ></textarea>
+          <div style="font-size: 12px; color: #999; margin-top: 4px">
+            최대 200자
+          </div>
+        </div>
+
+        <!-- 출발지 -->
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+            "
+          >
+            출발지 <span style="color: #ff1744">*</span>
+          </label>
+          <input
+            type="text"
+            class="filter-input"
+            id="party-departure"
+            placeholder="예: 강남역 2번 출구"
+            required
+          />
+        </div>
+
+        <!-- 도착지 -->
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+            "
+          >
+            도착지 <span style="color: #ff1744">*</span>
+          </label>
+          <input
+            type="text"
+            class="filter-input"
+            id="party-arrival"
+            placeholder="예: 잠실종합운동장 주경기장"
+            required
+          />
+        </div>
+
+        <!-- 이동 수단 -->
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+            "
+          >
+            이동 수단 <span style="color: #ff1744">*</span>
+          </label>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap">
+            <label style="flex: 1; min-width: 100px">
+              <input
+                type="radio"
+                name="transport"
+                value="subway"
+                checked
+                style="margin-right: 6px"
+              />
+              🚇 지하철
+            </label>
+            <label style="flex: 1; min-width: 100px">
+              <input
+                type="radio"
+                name="transport"
+                value="bus"
+                style="margin-right: 6px"
+              />
+              🚌 버스
+            </label>
+            <label style="flex: 1; min-width: 100px">
+              <input
+                type="radio"
+                name="transport"
+                value="car"
+                style="margin-right: 6px"
+              />
+              🚗 카풀
+            </label>
+            <label style="flex: 1; min-width: 100px">
+              <input
+                type="radio"
+                name="transport"
+                value="walk"
+                style="margin-right: 6px"
+              />
+              🚶 도보
+            </label>
+            <label style="flex: 1; min-width: 100px">
+              <input
+                type="radio"
+                name="transport"
+                value="other"
+                style="margin-right: 6px"
+              />
+              🎯 기타
+            </label>
+          </div>
+        </div>
+
+        <!-- 모집 인원 -->
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+            "
+          >
+            모집 인원 <span style="color: #ff1744">*</span>
+          </label>
+          <select class="filter-input" id="party-capacity" required>
+            <option value="">인원을 선택해주세요</option>
+            <option value="2">2명</option>
+            <option value="3">3명</option>
+            <option value="4" selected>4명</option>
+            <option value="5">5명</option>
+            <option value="6">6명</option>
+            <option value="8">8명</option>
+            <option value="10">10명 이상</option>
+          </select>
+        </div>
+
+        <!-- 내 성별 -->
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+            "
+          >
+            내 성별
+          </label>
+          <div style="display: flex; gap: 12px">
+            <label style="flex: 1">
+              <input
+                type="radio"
+                name="gender"
+                value="female"
+                style="margin-right: 6px"
+              />
+              👩 여성
+            </label>
+            <label style="flex: 1">
+              <input
+                type="radio"
+                name="gender"
+                value="male"
+                style="margin-right: 6px"
+              />
+              👨 남성
+            </label>
+            <label style="flex: 1">
+              <input
+                type="radio"
+                name="gender"
+                value="any"
+                checked
+                style="margin-right: 6px"
+              />
+              🙂 무관
+            </label>
+          </div>
+        </div>
+
+        <!-- 내 나이대 -->
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+            "
+          >
+            내 나이대
+          </label>
+          <select class="filter-input" id="party-age">
+            <option value="10s">10대</option>
+            <option value="20s" selected>20대</option>
+            <option value="30s">30대</option>
+            <option value="40s">40대</option>
+            <option value="50s">50대 이상</option>
+          </select>
+        </div>
+
+        <!-- 연락처 (선택) -->
+        <div style="margin-bottom: 32px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+            "
+          >
+            연락처 (선택)
+          </label>
+          <input
+            type="text"
+            class="filter-input"
+            id="party-contact"
+            placeholder="오픈채팅방 링크 또는 연락 방법"
+          />
+          <div style="font-size: 12px; color: #999; margin-top: 4px">
+            참여자에게 공유됩니다
+          </div>
+        </div>
+
+        <!-- 버튼 영역 -->
+        <div style="display: flex; gap: 12px">
+          <button
+            class="btn btn-outline"
+            onclick="goToPartyPage()"
+            style="flex: 1"
+          >
+            취소
+          </button>
+          <button
+            class="btn btn-primary"
+            onclick="submitParty()"
+            style="flex: 2"
+          >
+            파티 만들기 →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- (계속) -->
+  <!-- 6. 내 파티 관리 화면 -->
+  <div id="my-parties" class="screen">
+    <div class="header" style="margin-top: 88px">
+      <h1>내 파티 관리</h1>
+      <button class="btn btn-outline" onclick="goToPartyPage()">
+        ← 뒤로가기
+      </button>
+    </div>
+
+    <div style="max-width: 1000px; margin: 0 auto">
+      <!-- 탭 메뉴 -->
+      <div
+        style="
+          display: flex;
+          gap: 8px;
+          margin-bottom: 24px;
+          border-bottom: 2px solid #e0e0e0;
+        "
+      >
+        <button
+          id="tab-created"
+          class="party-tab active"
+          onclick="switchPartyTab('created')"
+          style="
+            flex: 1;
+            padding: 16px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid #ff1744;
+            font-size: 15px;
+            font-weight: 700;
+            color: #ff1744;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+        >
+          내가 만든 파티
+        </button>
+        <button
+          id="tab-applied"
+          class="party-tab"
+          onclick="switchPartyTab('applied')"
+          style="
+            flex: 1;
+            padding: 16px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 15px;
+            font-weight: 600;
+            color: #999;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+        >
+          신청한 파티
+        </button>
+        <button
+          id="tab-finished"
+          class="party-tab"
+          onclick="switchPartyTab('finished')"
+          style="
+            flex: 1;
+            padding: 16px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 15px;
+            font-weight: 600;
+            color: #999;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+        >
+          종료된 파티
+        </button>
+      </div>
+
+      <!-- 내가 만든 파티 -->
+      <div id="created-parties" class="party-tab-content">
+        <div style="margin-bottom: 16px">
+          <p style="color: #666; font-size: 14px">
+            내가 만든 파티의 신청자를 관리할 수 있습니다
+          </p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <!-- 파티 1 -->
+          <div
+            class="my-party-card"
+            style="
+              background: white;
+              padding: 24px;
+              border-radius: 12px;
+              border: 2px solid #e0e0e0;
+              cursor: pointer;
+              transition: all 0.2s;
+            "
+            onclick="showPartyApplicants(1)"
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                margin-bottom: 16px;
+              "
+            >
+              <div>
+                <h3
+                  style="
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #222;
+                    margin-bottom: 8px;
+                  "
+                >
+                  지민이 최애 🎤
+                </h3>
+                <div style="font-size: 14px; color: #666">
+                  <div>🎫 BTS WORLD TOUR 2025</div>
+                  <div>📍 강남역 → 잠실종합운동장</div>
+                  <div>🚇 지하철 2호선 (12월 15일 오후 4시 출발)</div>
+                </div>
+              </div>
+              <div style="text-align: right">
+                <span
+                  style="
+                    display: inline-block;
+                    padding: 6px 12px;
+                    border-radius: 12px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    background: #e3f2fd;
+                    color: #1976d2;
+                    margin-bottom: 8px;
+                  "
+                >
+                  신청자 3명
+                </span>
+                <div style="font-size: 12px; color: #999">모집중 1/4</div>
+              </div>
+            </div>
+            <div
+              style="
+                padding: 12px;
+                background: #f9f9f9;
+                border-radius: 8px;
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 12px;
+              "
+            >
+              💬 20대 여성분들 환영해요! 편하게 함께 가요~
+            </div>
+            <div style="text-align: right">
+              <button
+                class="btn btn-outline btn-sm"
+                onclick="event.stopPropagation(); showPartyApplicants(1)"
+                style="font-size: 13px"
+              >
+                신청자 관리 →
+              </button>
+            </div>
+          </div>
+
+          <!-- 파티 2 -->
+          <div
+            class="my-party-card"
+            style="
+              background: white;
+              padding: 24px;
+              border-radius: 12px;
+              border: 2px solid #e0e0e0;
+              cursor: pointer;
+              transition: all 0.2s;
+            "
+            onclick="showPartyApplicants(2)"
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                margin-bottom: 16px;
+              "
+            >
+              <div>
+                <h3
+                  style="
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #222;
+                    margin-bottom: 8px;
+                  "
+                >
+                  뉴진스와 함께 🐰
+                </h3>
+                <div style="font-size: 14px; color: #666">
+                  <div>🎫 NewJeans 미니 3집 발매 팬사인회</div>
+                  <div>📍 홍대입구역 → 예스24 라이브홀</div>
+                  <div>🚇 지하철 2호선 (12월 5일 오후 1시 출발)</div>
+                </div>
+              </div>
+              <div style="text-align: right">
+                <span
+                  style="
+                    display: inline-block;
+                    padding: 6px 12px;
+                    border-radius: 12px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    background: #fff3e0;
+                    color: #f57c00;
+                    margin-bottom: 8px;
+                  "
+                >
+                  신청자 1명
+                </span>
+                <div style="font-size: 12px; color: #999">모집중 0/3</div>
+              </div>
+            </div>
+            <div
+              style="
+                padding: 12px;
+                background: #f9f9f9;
+                border-radius: 8px;
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 12px;
+              "
+            >
+              💬 NewJeans 팬사인회 같이 가실 분! 뉴진스 팬분들 환영합니다~
+            </div>
+            <div style="text-align: right">
+              <button
+                class="btn btn-outline btn-sm"
+                onclick="event.stopPropagation(); showPartyApplicants(2)"
+                style="font-size: 13px"
+              >
+                신청자 관리 →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 신청한 파티 -->
+      <div id="applied-parties" class="party-tab-content" style="display: none">
+        <div style="margin-bottom: 16px">
+          <p style="color: #666; font-size: 14px">
+            내가 신청한 파티 목록입니다
+          </p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <!-- 신청 파티 1 - 승인 대기중 -->
+          <div
+            class="my-party-card"
+            style="
+              background: white;
+              padding: 24px;
+              border-radius: 12px;
+              border: 2px solid #e0e0e0;
+              transition: all 0.2s;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                margin-bottom: 16px;
+              "
+            >
+              <div style="flex: 1">
+                <h3
+                  style="
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #222;
+                    margin-bottom: 8px;
+                  "
+                >
+                  aespa 팬들 모여라 🎵
+                </h3>
+                <div style="font-size: 14px; color: #666">
+                  <div>🎫 뮤직뱅크 - aespa 컴백 무대</div>
+                  <div>📍 여의도역 → KBS 뮤직뱅크</div>
+                  <div>🚇 지하철 5호선 (11월 29일 오후 3시 출발)</div>
+                </div>
+              </div>
+            </div>
+            <div
+              style="
+                padding: 12px;
+                background: #f9f9f9;
+                border-radius: 8px;
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 12px;
+              "
+            >
+              💬 aespa 컴백 무대 같이 보러 가요!
+            </div>
+            <div style="text-align: right">
+              <span
+                style="
+                  display: inline-block;
+                  padding: 8px 16px;
+                  border-radius: 8px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  background: #fff3e0;
+                  color: #f57c00;
+                "
+              >
+                ⏳ 승인 대기중
+              </span>
+            </div>
+          </div>
+
+          <!-- 신청 파티 2 - 승인 완료 -->
+          <div
+            class="my-party-card"
+            style="
+              background: white;
+              padding: 24px;
+              border-radius: 12px;
+              border: 2px solid #4caf50;
+              transition: all 0.2s;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                margin-bottom: 16px;
+              "
+            >
+              <div style="flex: 1">
+                <h3
+                  style="
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #222;
+                    margin-bottom: 8px;
+                  "
+                >
+                  방탄 월드투어 함께 가요 💜
+                </h3>
+                <div style="font-size: 14px; color: #666">
+                  <div>🎫 BTS WORLD TOUR 2025</div>
+                  <div>📍 신림역 → 잠실종합운동장</div>
+                  <div>🚗 카풀 (12월 15일 오후 2시 출발)</div>
+                </div>
+              </div>
+            </div>
+            <div
+              style="
+                padding: 12px;
+                background: #f9f9f9;
+                border-radius: 8px;
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 12px;
+              "
+            >
+              💬 카풀로 편하게 가실 분! 주차비 같이 나눠요
+            </div>
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <span
+                style="
+                  display: inline-block;
+                  padding: 8px 16px;
+                  border-radius: 8px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  background: #e8f5e9;
+                  color: #388e3c;
+                "
+              >
+                ✓ 승인 완료
+              </span>
+              <button
+                class="btn btn-primary btn-sm"
+                onclick="openChatRoom(1)"
+                style="font-size: 14px; padding: 8px 20px"
+              >
+                💬 채팅방 이동
+              </button>
+            </div>
+          </div>
+
+          <!-- 신청 파티 3 - 승인 대기중 -->
+          <div
+            class="my-party-card"
+            style="
+              background: white;
+              padding: 24px;
+              border-radius: 12px;
+              border: 2px solid #e0e0e0;
+              transition: all 0.2s;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                margin-bottom: 16px;
+              "
+            >
+              <div style="flex: 1">
+                <h3
+                  style="
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #222;
+                    margin-bottom: 8px;
+                  "
+                >
+                  IVE 팬미팅 같이 가실 분 🌟
+                </h3>
+                <div style="font-size: 14px; color: #666">
+                  <div>🎫 IVE 팬미팅</div>
+                  <div>📍 강남역 → 올림픽공원</div>
+                  <div>🚌 버스 (12월 10일 오후 5시 출발)</div>
+                </div>
+              </div>
+            </div>
+            <div
+              style="
+                padding: 12px;
+                background: #f9f9f9;
+                border-radius: 8px;
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 12px;
+              "
+            >
+              💬 IVE 팬미팅 같이 가요! 다이브 환영 💙
+            </div>
+            <div style="text-align: right">
+              <span
+                style="
+                  display: inline-block;
+                  padding: 8px 16px;
+                  border-radius: 8px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  background: #fff3e0;
+                  color: #f57c00;
+                "
+              >
+                ⏳ 승인 대기중
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 종료된 파티 -->
+      <div
+        id="finished-parties"
+        class="party-tab-content"
+        style="display: none"
+      >
+        <div style="margin-bottom: 16px">
+          <p style="color: #666; font-size: 14px">
+            이벤트가 종료된 파티 목록입니다
+          </p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <!-- 종료된 파티 1 -->
+          <div
+            class="my-party-card"
+            style="
+              background: white;
+              padding: 24px;
+              border-radius: 12px;
+              border: 2px solid #e0e0e0;
+              transition: all 0.2s;
+              opacity: 0.8;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                margin-bottom: 16px;
+              "
+            >
+              <div>
+                <h3
+                  style="
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #222;
+                    margin-bottom: 8px;
+                  "
+                >
+                  토끼들과 함께 🐰
+                </h3>
+                <div style="font-size: 14px; color: #666">
+                  <div>🎫 NewJeans 팬사인회</div>
+                  <div>📍 홍대입구역 → 예스24 라이브홀</div>
+                  <div>🚇 지하철 2호선 (12월 5일 오후 1시 출발)</div>
+                </div>
+              </div>
+              <div style="text-align: right">
+                <span
+                  style="
+                    display: inline-block;
+                    padding: 6px 12px;
+                    border-radius: 12px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    background: #f5f5f5;
+                    color: #999;
+                  "
+                >
+                  이벤트 종료
+                </span>
+              </div>
+            </div>
+            <div
+              style="
+                padding: 12px;
+                background: #f9f9f9;
+                border-radius: 8px;
+                font-size: 14px;
+                color: #666;
+              "
+            >
+              💬 NewJeans 팬사인회 같이 가요! 뉴진스 팬분들만~
+            </div>
+          </div>
+
+          <!-- 종료된 파티 2 -->
+          <div
+            class="my-party-card"
+            style="
+              background: white;
+              padding: 24px;
+              border-radius: 12px;
+              border: 2px solid #e0e0e0;
+              transition: all 0.2s;
+              opacity: 0.8;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                margin-bottom: 16px;
+              "
+            >
+              <div>
+                <h3
+                  style="
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #222;
+                    margin-bottom: 8px;
+                  "
+                >
+                  아미 Forever 💜
+                </h3>
+                <div style="font-size: 14px; color: #666">
+                  <div>🎫 BTS WORLD TOUR 2025</div>
+                  <div>📍 수원 → 잠실종합운동장</div>
+                  <div>🚗 카풀 (12월 15일 오후 3시 출발)</div>
+                </div>
+              </div>
+              <div style="text-align: right">
+                <span
+                  style="
+                    display: inline-block;
+                    padding: 6px 12px;
+                    border-radius: 12px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    background: #f5f5f5;
+                    color: #999;
+                  "
+                >
+                  이벤트 종료
+                </span>
+              </div>
+            </div>
+            <div
+              style="
+                padding: 12px;
+                background: #f9f9f9;
+                border-radius: 8px;
+                font-size: 14px;
+                color: #666;
+              "
+            >
+              💬 수원 출발 카풀 하실 분! 주차비/기름값 n빵해요
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. 로그인 화면 -->
+  <div id="login" class="screen">
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px;
+      "
+    >
+      <div
+        style="
+          background: white;
+          border-radius: 24px;
+          padding: 48px;
+          max-width: 450px;
+          width: 100%;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        "
+      >
+        <div style="text-align: center; margin-bottom: 40px">
+          <div
+            style="
+              width: 64px;
+              height: 64px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              border-radius: 16px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-weight: 800;
+              font-size: 28px;
+              margin: 0 auto 16px;
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            "
+          >
+            🎵
+          </div>
+          <h1
+            style="
+              font-size: 28px;
+              font-weight: 800;
+              color: #222;
+              margin-bottom: 8px;
+            "
+          >
+            로그인
+          </h1>
+          <p style="font-size: 14px; color: #666">
+            K-POP Calendar에 오신 걸 환영합니다
+          </p>
+        </div>
+
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+              font-size: 14px;
+            "
+            >이메일</label
+          >
+          <input
+            type="email"
+            id="login-email"
+            class="filter-input"
+            placeholder="example@email.com"
+            style="font-size: 14px"
+          />
+        </div>
+
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+              font-size: 14px;
+            "
+            >비밀번호</label
+          >
+          <input
+            type="password"
+            id="login-password"
+            class="filter-input"
+            placeholder="비밀번호를 입력하세요"
+            style="font-size: 14px"
+          />
+        </div>
+
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+          "
+        >
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              font-size: 13px;
+              color: #666;
+              cursor: pointer;
+            "
+          >
+            <input type="checkbox" id="remember-me" style="margin-right: 6px" />
+            로그인 상태 유지
+          </label>
+          <a
+            href="#"
+            onclick="event.preventDefault(); showNotification('비밀번호 찾기 기능은 준비 중입니다')"
+            style="
+              font-size: 13px;
+              color: #667eea;
+              text-decoration: none;
+              font-weight: 600;
+            "
+            >비밀번호 찾기</a
+          >
+        </div>
+
+        <button
+          class="btn btn-primary"
+          onclick="performLogin()"
+          style="
+            width: 100%;
+            padding: 14px;
+            font-size: 15px;
+            margin-bottom: 16px;
+          "
+        >
+          로그인
+        </button>
+
+        <div
+          style="
+            text-align: center;
+            margin: 24px 0;
+            color: #ccc;
+            font-size: 13px;
+          "
+        >
+          또는
+        </div>
+
+        <button
+          class="btn btn-outline"
+          onclick="goToSignupPage()"
+          style="
+            width: 100%;
+            padding: 14px;
+            font-size: 15px;
+            margin-bottom: 24px;
+          "
+        >
+          회원가입
+        </button>
+
+        <div style="text-align: center">
+          <a
+            href="#"
+            onclick="event.preventDefault(); goToHome()"
+            style="font-size: 13px; color: #999; text-decoration: none"
+            >← 돌아가기</a
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. 회원가입 화면 -->
+  <div id="signup" class="screen">
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px;
+      "
+    >
+      <div
+        style="
+          background: white;
+          border-radius: 24px;
+          padding: 48px;
+          max-width: 450px;
+          width: 100%;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        "
+      >
+        <div style="text-align: center; margin-bottom: 40px">
+          <div
+            style="
+              width: 64px;
+              height: 64px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              border-radius: 16px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-weight: 800;
+              font-size: 28px;
+              margin: 0 auto 16px;
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            "
+          >
+            🎵
+          </div>
+          <h1
+            style="
+              font-size: 28px;
+              font-weight: 800;
+              color: #222;
+              margin-bottom: 8px;
+            "
+          >
+            회원가입
+          </h1>
+          <p style="font-size: 14px; color: #666">
+            K-POP 일정을 한눈에 관리하세요
+          </p>
+        </div>
+
+        <div style="margin-bottom: 20px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+              font-size: 14px;
+            "
+            >이름</label
+          >
+          <input
+            type="text"
+            id="signup-name"
+            class="filter-input"
+            placeholder="이름을 입력하세요"
+            style="font-size: 14px"
+          />
+        </div>
+
+        <div style="margin-bottom: 20px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+              font-size: 14px;
+            "
+            >이메일</label
+          >
+          <input
+            type="email"
+            id="signup-email"
+            class="filter-input"
+            placeholder="example@email.com"
+            style="font-size: 14px"
+          />
+        </div>
+
+        <div style="margin-bottom: 20px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+              font-size: 14px;
+            "
+            >비밀번호</label
+          >
+          <input
+            type="password"
+            id="signup-password"
+            class="filter-input"
+            placeholder="6자 이상 입력하세요"
+            style="font-size: 14px"
+          />
+        </div>
+
+        <div style="margin-bottom: 24px">
+          <label
+            style="
+              display: block;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #222;
+              font-size: 14px;
+            "
+            >비밀번호 확인</label
+          >
+          <input
+            type="password"
+            id="signup-password-confirm"
+            class="filter-input"
+            placeholder="비밀번호를 다시 입력하세요"
+            style="font-size: 14px"
+          />
+        </div>
+
+        <div style="margin-bottom: 24px; font-size: 13px; color: #666">
+          <label
+            style="
+              display: flex;
+              align-items: start;
+              margin-bottom: 8px;
+              cursor: pointer;
+            "
+          >
+            <input
+              type="checkbox"
+              id="agree-terms"
+              style="margin-right: 8px; margin-top: 2px"
+            />
+            <span>(필수) 만 14세 이상입니다</span>
+          </label>
+          <label
+            style="
+              display: flex;
+              align-items: start;
+              margin-bottom: 8px;
+              cursor: pointer;
+            "
+          >
+            <input
+              type="checkbox"
+              id="agree-privacy"
+              style="margin-right: 8px; margin-top: 2px"
+            />
+            <span>(필수) 이용약관 및 개인정보 처리방침에 동의합니다</span>
+          </label>
+          <label style="display: flex; align-items: start; cursor: pointer">
+            <input
+              type="checkbox"
+              id="agree-marketing"
+              style="margin-right: 8px; margin-top: 2px"
+            />
+            <span>(선택) 마케팅 정보 수신에 동의합니다</span>
+          </label>
+        </div>
+
+        <button
+          class="btn btn-primary"
+          onclick="performSignup()"
+          style="
+            width: 100%;
+            padding: 14px;
+            font-size: 15px;
+            margin-bottom: 16px;
+          "
+        >
+          가입하기
+        </button>
+
+        <div style="text-align: center; margin-top: 16px">
+          <span style="font-size: 13px; color: #666"
+            >이미 계정이 있으신가요?
+          </span>
+          <a
+            href="#"
+            onclick="event.preventDefault(); goToLoginPage()"
+            style="
+              font-size: 13px;
+              color: #667eea;
+              text-decoration: none;
+              font-weight: 600;
+            "
+            >로그인</a
+          >
+        </div>
+
+        <div style="text-align: center; margin-top: 16px">
+          <a
+            href="#"
+            onclick="event.preventDefault(); goToHome()"
+            style="font-size: 13px; color: #999; text-decoration: none"
+            >← 돌아가기</a
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. 채팅방 목록 화면 -->
+  <div id="chats" class="screen">
+    <div class="header" style="margin-top: 88px">
+      <h1>채팅방</h1>
+    </div>
+
+    <div style="max-width: 800px; margin: 0 auto">
+      <div style="margin-bottom: 24px">
+        <p style="color: #666; font-size: 14px">
+          참여 중인 팬 파티 채팅방 목록입니다
+        </p>
+      </div>
+
+      <div
+        id="chat-rooms-list"
+        style="display: flex; flex-direction: column; gap: 12px"
+      >
+        <!-- 채팅방 1 -->
+        <div
+          class="chat-room-card"
+          onclick="openChatRoom(1)"
+          style="
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+        >
+          <h3
+            style="
+              font-size: 16px;
+              font-weight: 700;
+              color: #222;
+              margin-bottom: 6px;
+            "
+          >
+            지민이 최애 🎤
+          </h3>
+          <span style="font-size: 12px; color: #999">참여자 3명</span>
+        </div>
+
+        <!-- 채팅방 2 -->
+        <div
+          class="chat-room-card"
+          onclick="openChatRoom(2)"
+          style="
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+        >
+          <h3
+            style="
+              font-size: 16px;
+              font-weight: 700;
+              color: #222;
+              margin-bottom: 6px;
+            "
+          >
+            뉴진스와 함께 🐰
+          </h3>
+          <span style="font-size: 12px; color: #999">참여자 2명</span>
+        </div>
+
+        <!-- 채팅방 3 -->
+        <div
+          class="chat-room-card"
+          onclick="openChatRoom(3)"
+          style="
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+        >
+          <h3
+            style="
+              font-size: 16px;
+              font-weight: 700;
+              color: #222;
+              margin-bottom: 6px;
+            "
+          >
+            aespa 팬들 모여라
+          </h3>
+          <span style="font-size: 12px; color: #999">참여자 4명</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ✅ #chats 화면 끝! -->
+
+  <!-- 10. 채팅방 화면 (실제 채팅) -->
+  <div id="chatroom" class="screen">
+    <div
+      class="header"
+      style="
+        margin-top: 88px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      "
+    >
+      <div style="display: flex; align-items: center; gap: 16px">
+        <button
+          class="btn btn-outline"
+          onclick="goToChatsPage()"
+          style="padding: 10px 16px"
+        >
+          ← 뒤로
+        </button>
+        <div>
+          <h1 id="chatroom-title" style="font-size: 20px; margin-bottom: 4px">
+            지민이 최애 🎤
+          </h1>
+          <p
+            id="chatroom-participants"
+            style="font-size: 13px; color: #666; margin: 0"
+          >
+            참여자 3명
+          </p>
+        </div>
+      </div>
+      <button
+        class="btn btn-outline"
+        onclick="toggleParticipantsPanel()"
+        style="padding: 10px 16px; display: flex; align-items: center; gap: 6px"
+      >
+        ☰ 참가자
+        <span
+          id="participants-badge"
+          style="
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+          "
+          >3</span
+        >
+      </button>
+    </div>
+
+    <!-- 참가자 목록 패널 -->
+    <div
+      id="participants-panel"
+      style="
+        display: none;
+        position: fixed;
+        top: 64px;
+        right: 24px;
+        width: 320px;
+        max-height: 600px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        z-index: 1001;
+        overflow: hidden;
+      "
+    >
+      <div style="padding: 20px; border-bottom: 2px solid #f0f0f0">
+        <h3 style="font-size: 18px; font-weight: 700; color: #222">
+          참가자 목록
+        </h3>
+      </div>
+      <div
+        id="participants-list"
+        style="max-height: 450px; overflow-y: auto; padding: 16px"
+      >
+        <!-- 동적 생성 -->
+      </div>
+
+      <!-- 방장이 아닌 경우에만 나가기 버튼 표시 -->
+      <div
+        id="leave-party-section"
+        style="padding: 16px; border-top: 2px solid #f0f0f0; display: none"
+      >
+        <button
+          onclick="leaveParty()"
+          style="
+            width: 100%;
+            padding: 14px;
+            background: white;
+            border: 2px solid #ffcdd2;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #c62828;
+            transition: all 0.2s;
+          "
+        >
+          나가기
+        </button>
+      </div>
+    </div>
+
+    <!-- 참가자 프로필 메뉴 (방장만 표시) -->
+    <div
+      id="participant-menu"
+      style="
+        display: none;
+        position: fixed;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        z-index: 1002;
+        padding: 8px;
+        min-width: 120px;
+      "
+    >
+      <button
+        id="kick-participant-btn"
+        onclick="kickParticipant()"
+        style="
+          width: 100%;
+          padding: 12px;
+          background: none;
+          border: none;
+          color: #c62828;
+          font-weight: 600;
+          font-size: 14px;
+          cursor: pointer;
+          border-radius: 8px;
+          transition: all 0.2s;
+          text-align: left;
+        "
+      >
+        ❌ 강퇴하기
+      </button>
+    </div>
+
+    <div
+      id="chat-messages"
+      style="
+        padding: 88px 24px 80px;
+        max-width: 800px;
+        margin: 0 auto;
+        min-height: calc(100vh - 168px);
+      "
+    >
+      <!-- 날짜 구분선 -->
+      <div style="text-align: center; margin: 24px 0">
+        <span
+          style="
+            display: inline-block;
+            padding: 6px 16px;
+            background: #f0f0f0;
+            border-radius: 16px;
+            font-size: 12px;
+            color: #666;
+          "
+          >2025년 12월 3일</span
+        >
+      </div>
+
+      <!-- 상대방 메시지 1 -->
+      <div style="display: flex; gap: 12px; margin-bottom: 16px">
+        <div
+          style="
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            flex-shrink: 0;
+          "
+        >
+          👤
+        </div>
+        <div style="flex: 1">
+          <div
+            style="
+              font-size: 13px;
+              font-weight: 600;
+              color: #222;
+              margin-bottom: 4px;
+            "
+          >
+            방탄 최애
+          </div>
+          <div style="display: flex; gap: 8px; align-items: end">
+            <div
+              style="
+                background: #f0f0f0;
+                padding: 12px 16px;
+                border-radius: 18px;
+                max-width: 70%;
+                font-size: 14px;
+                color: #222;
+                line-height: 1.5;
+              "
+            >
+              안녕하세요! 같이 가게 되어서 기대돼요 😊
+            </div>
+            <span style="font-size: 11px; color: #999; white-space: nowrap"
+              >오전 10:15</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- 상대방 메시지 2 -->
+      <div style="display: flex; gap: 12px; margin-bottom: 16px">
+        <div
+          style="
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            flex-shrink: 0;
+          "
+        >
+          👤
+        </div>
+        <div style="flex: 1">
+          <div
+            style="
+              font-size: 13px;
+              font-weight: 600;
+              color: #222;
+              margin-bottom: 4px;
+            "
+          >
+            행복한 팬
+          </div>
+          <div style="display: flex; gap: 8px; align-items: end">
+            <div
+              style="
+                background: #f0f0f0;
+                padding: 12px 16px;
+                border-radius: 18px;
+                max-width: 70%;
+                font-size: 14px;
+                color: #222;
+                line-height: 1.5;
+              "
+            >
+              저도요! 4시 출발이면 충분할까요?
+            </div>
+            <span style="font-size: 11px; color: #999; white-space: nowrap"
+              >오전 10:47</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- 내 메시지 1 -->
+      <div
+        style="display: flex; justify-content: flex-end; margin-bottom: 16px"
+      >
+        <div
+          style="
+            display: flex;
+            gap: 8px;
+            align-items: end;
+            flex-direction: row-reverse;
+          "
+        >
+          <div
+            style="
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              padding: 12px 16px;
+              border-radius: 18px;
+              max-width: 70%;
+              font-size: 14px;
+              color: white;
+              line-height: 1.5;
+            "
+          >
+            네! 충분할 것 같아요 👍
+          </div>
+          <span style="font-size: 11px; color: #999; white-space: nowrap"
+            >오전 11:02</span
+          >
+        </div>
+      </div>
+
+      <!-- 상대방 메시지 3 -->
+      <div style="display: flex; gap: 12px; margin-bottom: 16px">
+        <div
+          style="
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            flex-shrink: 0;
+          "
+        >
+          👤
+        </div>
+        <div style="flex: 1">
+          <div
+            style="
+              font-size: 13px;
+              font-weight: 600;
+              color: #222;
+              margin-bottom: 4px;
+            "
+          >
+            방탄 최애
+          </div>
+          <div style="display: flex; gap: 8px; align-items: end">
+            <div
+              style="
+                background: #f0f0f0;
+                padding: 12px 16px;
+                border-radius: 18px;
+                max-width: 70%;
+                font-size: 14px;
+                color: #222;
+                line-height: 1.5;
+              "
+            >
+              다들 몇 시에 출발하시나요?
+            </div>
+            <span style="font-size: 11px; color: #999; white-space: nowrap"
+              >오전 11:23</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 메시지 입력창 -->
+    <div
+      style="
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 2px solid #f0f0f0;
+        padding: 16px 24px;
+        z-index: 999;
+      "
+    >
+      <div
+        style="
+          max-width: 800px;
+          margin: 0 auto;
+          display: flex;
+          gap: 12px;
+          align-items: center;
+        "
+      >
+        <button
+          onclick="showNotification('파일 전송 기능은 준비 중입니다')"
+          style="
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+          "
+        >
+          +
+        </button>
+        <input
+          type="text"
+          id="chat-input"
+          placeholder="메시지를 입력하세요..."
+          style="
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+          "
+          onkeypress="if(event.key === 'Enter') sendMessage()"
+        />
+        <button
+          onclick="sendMessage()"
+          style="
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+          "
+        >
+          ➤
+        </button>
+      </div>
+    </div>
+
+    <!-- 별점 평가 모달 -->
+    <div id="rating-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content" style="max-width: 500px">
+        <div class="modal-header">
+          <h2 class="modal-title">파티 참여자 평가</h2>
+          <p class="modal-subtitle">함께한 참여자들에게 별점을 매겨주세요</p>
+        </div>
+
+        <div
+          id="rating-list"
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px 0;
+          "
+        >
+          <!-- 동적 생성 -->
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 24px">
+          <button
+            class="btn btn-outline"
+            onclick="skipRating()"
+            style="flex: 1"
+          >
+            건너뛰기
+          </button>
+          <button
+            class="btn btn-primary"
+            onclick="submitRatings()"
+            style="flex: 2"
+          >
+            평가 완료
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ✅ #chatroom 화면 끝! -->
+
+  <!-- 11. 마이페이지 화면 -->
+  <div id="mypage" class="screen">
+    <div class="header" style="margin-top: 88px">
+      <h1>마이페이지</h1>
+    </div>
+
+    <div style="max-width: 800px; margin: 0 auto">
+      <!-- 프로필 섹션 -->
+      <div
+        style="
+          background: white;
+          padding: 32px;
+          border-radius: 16px;
+          border: 2px solid #e0e0e0;
+          margin-bottom: 24px;
+        "
+      >
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 32px;
+          "
+        >
+          <div
+            style="
+              width: 80px;
+              height: 80px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-size: 36px;
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            "
+          >
+            👤
+          </div>
+          <div style="flex: 1">
+            <h2
+              id="mypage-username"
+              style="
+                font-size: 24px;
+                font-weight: 700;
+                color: #222;
+                margin-bottom: 8px;
+              "
+            >
+              사용자
+            </h2>
+            <p id="mypage-email" style="font-size: 14px; color: #666">
+              user@example.com
+            </p>
+          </div>
+        </div>
+
+        <!-- 회원 정보 수정 폼 -->
+        <div style="border-top: 2px solid #f0f0f0; padding-top: 24px">
+          <h3
+            style="
+              font-size: 18px;
+              font-weight: 700;
+              color: #222;
+              margin-bottom: 20px;
+            "
+          >
+            회원 정보 수정
+          </h3>
+
+          <div style="margin-bottom: 20px">
+            <label
+              style="
+                display: block;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #222;
+                font-size: 14px;
+              "
+              >이름</label
+            >
+            <input
+              type="text"
+              id="mypage-name-input"
+              class="filter-input"
+              placeholder="이름을 입력하세요"
+              style="font-size: 14px"
+            />
+          </div>
+
+          <div style="margin-bottom: 20px">
+            <label
+              style="
+                display: block;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #222;
+                font-size: 14px;
+              "
+              >이메일</label
+            >
+            <input
+              type="email"
+              id="mypage-email-input"
+              class="filter-input"
+              placeholder="example@email.com"
+              style="font-size: 14px"
+              disabled
+            />
+            <div style="font-size: 12px; color: #999; margin-top: 4px">
+              이메일은 변경할 수 없습니다
+            </div>
+          </div>
+
+          <div style="margin-bottom: 20px">
+            <label
+              style="
+                display: block;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #222;
+                font-size: 14px;
+              "
+              >새 비밀번호</label
+            >
+            <input
+              type="password"
+              id="mypage-password-input"
+              class="filter-input"
+              placeholder="변경할 비밀번호를 입력하세요 (선택)"
+              style="font-size: 14px"
+            />
+            <div style="font-size: 12px; color: #999; margin-top: 4px">
+              비밀번호를 변경하지 않으려면 비워두세요
+            </div>
+          </div>
+
+          <div style="margin-bottom: 24px">
+            <label
+              style="
+                display: block;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #222;
+                font-size: 14px;
+              "
+              >새 비밀번호 확인</label
+            >
+            <input
+              type="password"
+              id="mypage-password-confirm-input"
+              class="filter-input"
+              placeholder="비밀번호를 다시 입력하세요"
+              style="font-size: 14px"
+            />
+          </div>
+
+          <button
+            class="btn btn-primary"
+            onclick="updateUserInfo()"
+            style="width: 100%; padding: 14px; font-size: 15px"
+          >
+            정보 수정하기
+          </button>
+        </div>
+      </div>
+
+      <!-- 빠른 메뉴 -->
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
+          margin-bottom: 24px;
+        "
+      >
+        <div
+          onclick="goToMyPartiesPage(); setTimeout(() => switchPartyTab('applied'), 100)"
+          style="
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+          "
+        >
+          <div style="font-size: 36px; margin-bottom: 12px">🎉</div>
+          <h3
+            style="
+              font-size: 16px;
+              font-weight: 700;
+              color: #222;
+              margin-bottom: 4px;
+            "
+          >
+            신청한 파티
+          </h3>
+          <p style="font-size: 13px; color: #666">내가 신청한 파티 확인</p>
+        </div>
+
+        <div
+          onclick="goToArtistsPage()"
+          style="
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+          "
+        >
+          <div style="font-size: 36px; margin-bottom: 12px">⭐</div>
+          <h3
+            style="
+              font-size: 16px;
+              font-weight: 700;
+              color: #222;
+              margin-bottom: 4px;
+            "
+          >
+            내 아티스트 관리
+          </h3>
+          <p style="font-size: 13px; color: #666">팔로우 아티스트 관리</p>
+        </div>
+
+        <div
+          onclick="goToMyPartiesPage()"
+          style="
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+          "
+        >
+          <div style="font-size: 36px; margin-bottom: 12px">📋</div>
+          <h3
+            style="
+              font-size: 16px;
+              font-weight: 700;
+              color: #222;
+              margin-bottom: 4px;
+            "
+          >
+            내 파티 관리
+          </h3>
+          <p style="font-size: 13px; color: #666">내가 만든 파티 관리</p>
+        </div>
+
+        <div
+          onclick="goToBookingHistoryPage()"
+          style="
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+          "
+        >
+          <div style="font-size: 36px; margin-bottom: 12px">🎫</div>
+          <h3
+            style="
+              font-size: 16px;
+              font-weight: 700;
+              color: #222;
+              margin-bottom: 4px;
+            "
+          >
+            예매 확인
+          </h3>
+          <p style="font-size: 13px; color: #666">나의 예매 내역</p>
+        </div>
+      </div>
+
+      <!-- 계정 관리 -->
+      <div
+        style="
+          background: white;
+          padding: 24px;
+          border-radius: 16px;
+          border: 2px solid #e0e0e0;
+        "
+      >
+        <h3
+          style="
+            font-size: 18px;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 16px;
+          "
+        >
+          계정 관리
+        </h3>
+
+        <button
+          onclick="logout()"
+          style="
+            width: 100%;
+            padding: 14px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.2s;
+            margin-bottom: 12px;
+          "
+        >
+          로그아웃
+        </button>
+
+        <button
+          onclick="if(confirm('정말 탈퇴하시겠습니까?')) { showNotification('탈퇴 기능은 준비 중입니다'); }"
+          style="
+            width: 100%;
+            padding: 14px;
+            background: white;
+            border: 2px solid #ffcdd2;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #c62828;
+            transition: all 0.2s;
+          "
+        >
+          회원 탈퇴
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 신청자 관리 모달 -->
+<div class="modal-overlay" id="applicants-modal">
+  <div class="modal-content" style="max-width: 700px">
+    <button class="modal-close" onclick="closeApplicantsModal()">✕</button>
+    <div class="modal-header">
+      <h2 class="modal-title" id="applicants-party-title"></h2>
+      <p class="modal-subtitle" id="applicants-count"></p>
+    </div>
+    <div
+      id="applicants-list"
+      style="display: flex; flex-direction: column; gap: 16px"
+    ></div>
+  </div>
+</div>
+
+<!-- 알림 패널 -->
+<div
+  id="notification-panel"
+  style="
+    display: none;
+    position: fixed;
+    top: 64px;
+    right: 24px;
+    width: 400px;
+    max-height: 600px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    overflow: hidden;
+  "
+>
+  <div
+    style="
+      padding: 20px;
+      border-bottom: 2px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    "
+  >
+    <h3 style="font-size: 18px; font-weight: 700; color: #222">알림</h3>
+    <button
+      onclick="clearAllNotifications()"
+      style="
+        background: none;
+        border: none;
+        font-size: 13px;
+        color: #667eea;
+        font-weight: 600;
+        cursor: pointer;
+      "
+    >
+      모두 삭제
+    </button>
+  </div>
+  <div id="notification-list" style="max-height: 500px; overflow-y: auto"></div>
+</div>
+
+<!-- 일정 상세 모달 -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-date"></h2>
+      <p class="modal-subtitle" id="modal-event-count"></p>
+    </div>
+    <div class="modal-event-list" id="modal-event-list"></div>
+  </div>
+</div>
