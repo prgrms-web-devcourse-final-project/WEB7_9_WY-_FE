@@ -16,19 +16,19 @@ import {
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import GroupIcon from '@mui/icons-material/Group';
 import { MainLayout } from '@/components/layout';
-import { EmptyState } from '@/components/common';
+import { EmptyState, LoadingSpinner } from '@/components/common';
 import { useChatStore } from '@/stores/chatStore';
-import { mockChatRooms } from '@/lib/mockData';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 export default function ChatsPage() {
+  const { isLoading: isAuthLoading, isAllowed } = useAuthGuard();
   const router = useRouter();
-  const { chatRooms, setChatRooms } = useChatStore();
+  const { chatRooms } = useChatStore();
 
   useEffect(() => {
-    if (chatRooms.length === 0) {
-      setChatRooms(mockChatRooms);
-    }
-  }, [chatRooms.length, setChatRooms]);
+    if (!isAllowed) return;
+    // TODO: Fetch chat rooms from API when available
+  }, [isAllowed]);
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -40,6 +40,14 @@ export default function ChatsPage() {
     if (hours < 24) return `${hours}시간 전`;
     return `${Math.floor(hours / 24)}일 전`;
   };
+
+  if (isAuthLoading) {
+    return <LoadingSpinner fullScreen message="로딩 중..." />;
+  }
+
+  if (!isAllowed) {
+    return null;
+  }
 
   return (
     <MainLayout>

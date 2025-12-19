@@ -18,13 +18,11 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { EventChip, ArtistAvatar } from '@/components/common';
-import { mockEvents } from '@/lib/mockData';
 import type { UpcomingEvent, EventType, ScheduleCategory } from '@/types';
 
 interface UpcomingEventsSidebarProps {
   upcomingEvents: UpcomingEvent[];
   selectedArtistIds: string[];
-  isGuestMode: boolean;
   isLoading: boolean;
 }
 
@@ -32,9 +30,16 @@ interface UpcomingEventsSidebarProps {
 const scheduleToEventType = (category: ScheduleCategory): EventType => {
   const mapping: Record<ScheduleCategory, EventType> = {
     'CONCERT': 'concert',
+    'FAN_MEETING': 'fansign',
     'FAN_SIGN': 'fansign',
     'BROADCAST': 'broadcast',
+    'ONLINE_RELEASE': 'broadcast',
     'BIRTHDAY': 'birthday',
+    'FESTIVAL': 'festival',
+    'AWARD_SHOW': 'award',
+    'ANNIVERSARY': 'anniversary',
+    'LIVE_STREAM': 'livestream',
+    'ETC': 'other',
   };
   return mapping[category] || 'concert';
 };
@@ -42,49 +47,23 @@ const scheduleToEventType = (category: ScheduleCategory): EventType => {
 export default function UpcomingEventsSidebar({
   upcomingEvents,
   selectedArtistIds,
-  isGuestMode,
   isLoading,
 }: UpcomingEventsSidebarProps) {
   const router = useRouter();
   const theme = useTheme();
 
-  // Filter and process events
+  // Filter and process events - API data only (no mock data fallback)
   const displayEvents = useMemo(() => {
-    // Guest mode: use mock data
-    if (isGuestMode) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      return mockEvents
-        .filter((event) => {
-          const eventDate = new Date(event.date);
-          eventDate.setHours(0, 0, 0, 0);
-          return (
-            eventDate >= today &&
-            (selectedArtistIds.length === 0 ||
-              selectedArtistIds.includes(event.artistId))
-          );
-        })
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        .slice(0, 5)
-        .map(event => ({
-          ...event,
-          scheduleId: Number(event.id),
-          scheduleCategory: event.type.toUpperCase() as ScheduleCategory,
-          scheduleTime: event.date,
-          location: event.venue,
-          daysUntilEvent: Math.ceil((new Date(event.date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24)),
-        }));
-    }
-
-    // Logged in: use API data
+    // Use API data - artistId로 필터링, 지난 일정 제외, 날짜순 정렬
     return upcomingEvents
       .filter((event) =>
-        selectedArtistIds.length === 0 ||
-        selectedArtistIds.includes(String(event.scheduleId))
+        event.daysUntilEvent >= 0 && // 지난 일정 제외
+        (selectedArtistIds.length === 0 ||
+          selectedArtistIds.includes(String(event.artistId)))
       )
+      .sort((a, b) => a.daysUntilEvent - b.daysUntilEvent) // D-Day 가까운 순
       .slice(0, 5);
-  }, [upcomingEvents, selectedArtistIds, isGuestMode]);
+  }, [upcomingEvents, selectedArtistIds]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);

@@ -1,4 +1,4 @@
-# Fandom App - 프로젝트 가이드
+# Kalendar - 프로젝트 가이드
 
 ## 기술 스택
 - Next.js 15 (App Router)
@@ -10,7 +10,7 @@
 ## 폴더 구조 규칙
 - `src/app/` - 라우트 (page.tsx, layout.tsx만)
 - `src/components/` - React 컴포넌트 (도메인별 폴더)
-  - `src/components/calendar/` - 캘린더 관련 컴포넌트
+  - `src/components/kalendar/` - 캘린더 관련 컴포넌트
   - `src/components/layout/DesktopSidebar.tsx` - 데스크탑 사이드바
 - `src/stores/` - Zustand 스토어
 - `src/hooks/` - 커스텀 훅
@@ -162,3 +162,38 @@ psql -h localhost -p 5432 -U postgres -d kalender -f .claude/testing/setup.sql
 ### Backend API Base URL
 - **Local**: `http://localhost:8080/api/v1`
 - **Swagger**: `http://localhost:8080/swagger-ui.html`
+
+---
+
+## Backend API Enum 정의 (중요!)
+
+백엔드 프로젝트: `/Users/joyeongjae/projects/WEB7_9_WY-_BE`
+
+### Party 관련 Enum
+
+| Enum | 값 | 한글 설명 |
+|------|-----|----------|
+| **PartyType** | `LEAVE`, `ARRIVE` | 출발팟, 복귀팟 |
+| **PartyStatus** | `RECRUITING`, `CLOSED`, `COMPLETED`, `CANCELLED` | 모집중, 모집마감, 종료, 취소됨 |
+| **TransportType** | `TAXI`, `CARPOOL`, `SUBWAY`, `BUS`, `WALK` | 택시, 카풀, 지하철, 버스, 도보 |
+| **PreferredAge** | `TEEN`, `TWENTY`, `THIRTY`, `FORTY`, `FIFTY_PLUS`, `NONE` | 10대~50대이상, 무관 |
+| **Gender** | `MALE`, `FEMALE`, `ANY` | 남성, 여성, 무관 |
+| **MemberRole** | `LEADER`, `MEMBER` | 파티장, 멤버 |
+| **ApplicationStatus** | `PENDING`, `APPROVED`, `REJECTED` | 대기중, 승인, 거절 |
+
+### Schedule 관련 Enum
+
+| Enum | 값 |
+|------|-----|
+| **ScheduleCategory** | `CONCERT`, `FAN_MEETING`, `BROADCAST`, `ONLINE_RELEASE`, `BIRTHDAY`, `FESTIVAL`, `AWARD_SHOW`, `ANNIVERSARY`, `FAN_SIGN`, `LIVE_STREAM`, `ETC` |
+| **ScheduleStatus** | `READY`, `AVAILABLE`, `SOLD_OUT`, `CLOSED`, `CANCELLED` |
+
+### 테스트 데이터 자동 생성
+- 백엔드 서버 시작시 `TestDataInitializer.java`가 자동으로 테스트 데이터 생성
+- 50개 파티, 80+ 스케줄, 25개 아티스트, 10개 테스트 계정
+- **H2 메모리 DB 사용시 서버 재시작마다 데이터 초기화됨**
+
+### 프론트엔드 타입 규칙
+- **Mock 데이터 사용 금지** - 항상 API 호출 사용
+- **Enum 값은 대문자** - 백엔드 API 응답 그대로 사용
+- `src/types/index.ts`에 정의된 타입과 백엔드 Enum 일치 필수

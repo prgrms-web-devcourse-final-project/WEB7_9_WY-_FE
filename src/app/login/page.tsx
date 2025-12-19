@@ -50,7 +50,7 @@ export default function LoginPage() {
       const { isLoggedIn, isOnboarded } = useAuthStore.getState();
       if (isLoggedIn) {
         if (isOnboarded) {
-          router.push('/calendar');
+          router.push('/kalendar');
         } else {
           router.push('/onboarding');
         }

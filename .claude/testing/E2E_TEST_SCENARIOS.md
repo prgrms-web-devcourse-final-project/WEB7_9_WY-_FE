@@ -1,6 +1,6 @@
 # E2E 테스트 시나리오
 
-> Fandom App (Kalender) 전체 API 및 UI 테스트 시나리오
+> Kalendar App 전체 API 및 UI 테스트 시나리오
 > 총 52개 테스트 케이스
 
 ## 테스트 환경
@@ -60,7 +60,7 @@
 **Expected**: 200 OK
 - Response Header: `Authorization: Bearer {accessToken}`
 - Response Cookie: `refreshToken` (httpOnly)
-**UI Flow**: /login 페이지 → 이메일/비밀번호 입력 → 로그인 → /calendar 리다이렉트
+**UI Flow**: /login 페이지 → 이메일/비밀번호 입력 → 로그인 → /kalendar 리다이렉트
 
 ---
 
@@ -298,7 +298,7 @@
   "upcomingEvents": [...]
 }
 ```
-**UI Flow**: /calendar 페이지 메인 뷰
+**UI Flow**: /kalendar 페이지 메인 뷰
 
 ---
 
@@ -550,7 +550,7 @@
 2. 이메일 인증 완료
 3. `/login` - 로그인
 4. `/onboarding` - 아티스트 3팀 선택 (BTS, BLACKPINK, NewJeans)
-5. `/calendar` - 선택한 아티스트 일정 표시 확인
+5. `/kalendar` - 선택한 아티스트 일정 표시 확인
 6. 일정 클릭 → 상세 페이지
 7. `/party/create` - 파티 생성
 8. `/party/my-parties` - 내가 만든 파티 확인
@@ -564,12 +564,12 @@
 ### TC-E2E-002: 게스트 → 회원 전환
 **Steps**:
 1. `/onboarding` - 게스트 모드로 아티스트 선택
-2. `/calendar` - 목데이터로 캘린더 표시
+2. `/kalendar` - 목데이터로 캘린더 표시
 3. `/party` - 파티 상세 → 신청하기 클릭
 4. 로그인 필요 알림 → `/login` 리다이렉트
 5. 회원가입 또는 로그인
 6. 게스트 선택 아티스트 자동 병합 확인
-7. `/calendar` - API 데이터로 캘린더 표시
+7. `/kalendar` - API 데이터로 캘린더 표시
 
 **Expected**: 게스트 선택이 회원 데이터로 병합됨
 

@@ -27,6 +27,7 @@ type RawScheduleResponse = {
 
 type RawUpcomingEventResponse = {
   scheduleId?: number;
+  artistId?: number;
   artistName?: string;
   title?: string;
   scheduleCategory?: string;
@@ -74,6 +75,7 @@ export function useFollowingSchedules(params: { year: number; month: number; art
       const upcomingEvents: UpcomingEvent[] = (data?.upcomingEvents || []).map(
         (e: RawUpcomingEventResponse) => ({
           scheduleId: e.scheduleId || 0,
+          artistId: e.artistId || 0,
           artistName: e.artistName || '',
           title: e.title || '',
           scheduleCategory: mapCategory(e.scheduleCategory),

@@ -44,7 +44,12 @@ export function useArtists() {
 }
 
 // Get following artists
-export function useFollowingArtists() {
+interface UseFollowingArtistsOptions {
+  enabled?: boolean;
+}
+
+export function useFollowingArtists(options: UseFollowingArtistsOptions = {}) {
+  const { enabled = true } = options;
   const { setFollowingArtists } = useArtistStore();
 
   return useQuery({
@@ -62,6 +67,7 @@ export function useFollowingArtists() {
       return followingIds;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled,
   });
 }
 

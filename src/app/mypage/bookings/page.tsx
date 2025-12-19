@@ -15,34 +15,22 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { MainLayout } from '@/components/layout';
-
-const mockBookings = [
-  {
-    id: '1',
-    eventName: 'BTS WORLD TOUR 2025',
-    artistName: 'BTS',
-    date: '2025-12-15',
-    time: '18:00',
-    venue: '잠실종합운동장',
-    seat: 'VIP A구역 3열 15번',
-    status: 'confirmed',
-    ticketNumber: 'TK-2025-001234',
-  },
-  {
-    id: '2',
-    eventName: 'NewJeans 발렌타인 콘서트',
-    artistName: 'NewJeans',
-    date: '2025-02-14',
-    time: '19:00',
-    venue: '올림픽공원 올림픽홀',
-    seat: 'R석 5열 8번',
-    status: 'pending',
-    ticketNumber: 'TK-2025-001235',
-  },
-];
+import { LoadingSpinner } from '@/components/common';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useBookingStore } from '@/stores/bookingStore';
 
 export default function BookingsPage() {
+  const { isLoading: isAuthLoading, isAllowed } = useAuthGuard();
   const router = useRouter();
+  const { bookingHistory } = useBookingStore();
+
+  if (isAuthLoading) {
+    return <LoadingSpinner fullScreen message="로딩 중..." />;
+  }
+
+  if (!isAllowed) {
+    return null;
+  }
 
   const getStatusChip = (status: string) => {
     switch (status) {
@@ -74,7 +62,7 @@ export default function BookingsPage() {
         </Box>
 
         <Box sx={{ p: 2 }}>
-          {mockBookings.length === 0 ? (
+          {bookingHistory.length === 0 ? (
             <Box
               sx={{
                 display: 'flex',
@@ -91,14 +79,14 @@ export default function BookingsPage() {
               <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
                 캘린더에서 이벤트를 예매해보세요
               </Typography>
-              <Button variant="contained" onClick={() => router.push('/calendar')}>
+              <Button variant="contained" onClick={() => router.push('/kalendar')}>
                 캘린더로 이동
               </Button>
             </Box>
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {mockBookings.map((booking) => (
-                <Card key={booking.id}>
+              {bookingHistory.map((booking) => (
+                <Card key={booking.bookingNumber}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                       <Box>
@@ -106,10 +94,10 @@ export default function BookingsPage() {
                           {booking.eventName}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {booking.artistName}
+                          {booking.sectionName}
                         </Typography>
                       </Box>
-                      {getStatusChip(booking.status)}
+                      {getStatusChip(booking.status || 'confirmed')}
                     </Box>
 
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
@@ -125,13 +113,20 @@ export default function BookingsPage() {
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <ConfirmationNumberIcon fontSize="small" color="action" />
-                        <Typography variant="body2">{booking.seat}</Typography>
+                        <Typography variant="body2">
+                          {booking.seats?.join(', ') || '좌석 정보 없음'}
+                        </Typography>
                       </Box>
                     </Box>
 
-                    <Typography variant="caption" color="text.disabled">
-                      예매번호: {booking.ticketNumber}
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="caption" color="text.disabled">
+                        예매번호: {booking.bookingNumber}
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} color="primary.main">
+                        {(booking.totalPrice || 0).toLocaleString()}원
+                      </Typography>
+                    </Box>
                   </CardContent>
                 </Card>
               ))}

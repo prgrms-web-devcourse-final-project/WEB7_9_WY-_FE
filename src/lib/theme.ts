@@ -18,6 +18,11 @@ declare module '@mui/material/styles' {
       fansign: string;
       broadcast: string;
       birthday: string;
+      festival: string;
+      award: string;
+      anniversary: string;
+      livestream: string;
+      other: string;
     };
   }
   interface PaletteOptions {
@@ -31,6 +36,11 @@ declare module '@mui/material/styles' {
       fansign: string;
       broadcast: string;
       birthday: string;
+      festival: string;
+      award: string;
+      anniversary: string;
+      livestream: string;
+      other: string;
     };
   }
 }
@@ -110,139 +120,96 @@ const tokens = {
     500: '#EF4444',
     600: '#DC2626',
   },
+  // Additional event colors
+  orange: {
+    400: '#FB923C',
+    500: '#F97316',
+  },
+  indigo: {
+    400: '#818CF8',
+    500: '#6366F1',
+  },
+  rose: {
+    400: '#FB7185',
+    500: '#F43F5E',
+  },
+  sky: {
+    400: '#38BDF8',
+    500: '#0EA5E9',
+  },
+  gray: {
+    400: '#9CA3AF',
+    500: '#6B7280',
+  },
 };
 
 // Pretendard font stack
 const fontFamily = '"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 export const theme = createTheme({
-  cssVariables: {
-    colorSchemeSelector: 'class',
-  },
-  defaultColorScheme: 'light',
-  colorSchemes: {
-    light: {
-      palette: {
-        mode: 'light',
-        primary: {
-          main: tokens.violet[600],
-          dark: tokens.violet[700],
-          light: tokens.violet[400],
-          contrastText: '#FFFFFF',
-        },
-        secondary: {
-          main: tokens.teal[500],
-          light: tokens.teal[400],
-          dark: tokens.teal[600],
-          contrastText: '#FFFFFF',
-        },
-        accent: {
-          main: tokens.cyan[500],
-          light: tokens.cyan[400],
-          dark: tokens.cyan[600],
-        },
-        success: {
-          main: tokens.green[500],
-          light: tokens.green[400],
-          dark: tokens.green[600],
-        },
-        warning: {
-          main: tokens.amber[500],
-          light: tokens.amber[400],
-          dark: tokens.amber[600],
-        },
-        error: {
-          main: tokens.red[500],
-          light: tokens.red[400],
-          dark: tokens.red[600],
-        },
-        info: {
-          main: tokens.cyan[500],
-          light: tokens.cyan[400],
-          dark: tokens.cyan[600],
-        },
-        background: {
-          default: tokens.common.white,
-          paper: tokens.common.white,
-          surface: tokens.slate[50],
-          elevated: tokens.common.white,
-        },
-        text: {
-          primary: tokens.slate[900],
-          secondary: tokens.slate[600],
-          disabled: tokens.slate[400],
-        },
-        divider: tokens.slate[200],
-        event: {
-          concert: tokens.pink[500],
-          fansign: tokens.violet[400],
-          broadcast: tokens.teal[400],
-          birthday: tokens.amber[400],
-        },
-        contrastThreshold: 4.5,
-      },
+  palette: {
+    mode: 'light',
+    primary: {
+      main: tokens.violet[600],
+      dark: tokens.violet[700],
+      light: tokens.violet[400],
+      contrastText: '#FFFFFF',
     },
-    dark: {
-      palette: {
-        mode: 'dark',
-        primary: {
-          main: tokens.violet[500],
-          dark: tokens.violet[600],
-          light: tokens.violet[400],
-          contrastText: '#FFFFFF',
-        },
-        secondary: {
-          main: tokens.teal[400],
-          light: tokens.teal[300],
-          dark: tokens.teal[500],
-          contrastText: '#FFFFFF',
-        },
-        accent: {
-          main: tokens.cyan[400],
-          light: tokens.cyan[300],
-          dark: tokens.cyan[500],
-        },
-        success: {
-          main: tokens.green[500],
-          light: tokens.green[400],
-          dark: tokens.green[600],
-        },
-        warning: {
-          main: tokens.amber[400],
-          light: tokens.amber[400],
-          dark: tokens.amber[500],
-        },
-        error: {
-          main: tokens.red[500],
-          light: tokens.red[400],
-          dark: tokens.red[600],
-        },
-        info: {
-          main: tokens.cyan[400],
-          light: tokens.cyan[300],
-          dark: tokens.cyan[500],
-        },
-        background: {
-          default: tokens.slate[950],
-          paper: tokens.slate[900],
-          surface: tokens.slate[800],
-          elevated: tokens.slate[700],
-        },
-        text: {
-          primary: tokens.slate[50],
-          secondary: tokens.slate[300],
-          disabled: tokens.slate[500],
-        },
-        divider: tokens.slate[700],
-        event: {
-          concert: tokens.pink[400],
-          fansign: tokens.violet[400],
-          broadcast: tokens.teal[400],
-          birthday: tokens.amber[400],
-        },
-        contrastThreshold: 4.5,
-      },
+    secondary: {
+      main: tokens.teal[500],
+      light: tokens.teal[400],
+      dark: tokens.teal[600],
+      contrastText: '#FFFFFF',
     },
+    accent: {
+      main: tokens.cyan[500],
+      light: tokens.cyan[400],
+      dark: tokens.cyan[600],
+    },
+    success: {
+      main: tokens.green[500],
+      light: tokens.green[400],
+      dark: tokens.green[600],
+    },
+    warning: {
+      main: tokens.amber[500],
+      light: tokens.amber[400],
+      dark: tokens.amber[600],
+    },
+    error: {
+      main: tokens.red[500],
+      light: tokens.red[400],
+      dark: tokens.red[600],
+    },
+    info: {
+      main: tokens.cyan[500],
+      light: tokens.cyan[400],
+      dark: tokens.cyan[600],
+    },
+    background: {
+      default: tokens.common.white,
+      paper: tokens.common.white,
+      surface: tokens.slate[50],
+      elevated: tokens.common.white,
+    },
+    text: {
+      primary: tokens.slate[900],
+      secondary: tokens.slate[600],
+      disabled: tokens.slate[400],
+    },
+    divider: tokens.slate[200],
+    event: {
+      concert: tokens.pink[500],
+      fansign: tokens.violet[400],
+      broadcast: tokens.teal[400],
+      birthday: tokens.amber[400],
+      festival: tokens.orange[500],
+      award: tokens.indigo[500],
+      anniversary: tokens.rose[500],
+      livestream: tokens.sky[500],
+      other: tokens.gray[500],
+    },
+    contrastThreshold: 4.5,
   },
   typography: {
     fontFamily,
@@ -355,12 +322,12 @@ export const theme = createTheme({
       styleOverrides: {
         root: ({ theme }) => ({
           borderRadius: 12,
-          border: `1px solid ${theme.vars?.palette.divider || theme.palette.divider}`,
-          backgroundColor: theme.vars?.palette.background.paper || theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
+          backgroundColor: theme.palette.background.paper,
           boxShadow: 'none',
           transition: 'all 0.2s ease',
           '&:hover': {
-            borderColor: theme.vars?.palette.primary.main || theme.palette.primary.main,
+            borderColor: theme.palette.primary.main,
             boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`,
           },
           '&:focus-within': {
@@ -398,22 +365,22 @@ export const theme = createTheme({
         root: ({ theme }) => ({
           '& .MuiOutlinedInput-root': {
             borderRadius: 8,
-            backgroundColor: theme.vars?.palette.background.paper || theme.palette.background.paper,
+            backgroundColor: theme.palette.background.paper,
             '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: theme.vars?.palette.divider || theme.palette.divider,
+              borderColor: theme.palette.divider,
             },
             '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: theme.vars?.palette.primary.main || theme.palette.primary.main,
+              borderColor: theme.palette.primary.main,
             },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: theme.vars?.palette.primary.main || theme.palette.primary.main,
+              borderColor: theme.palette.primary.main,
               borderWidth: 2,
             },
           },
           '& .MuiInputLabel-root': {
-            color: theme.vars?.palette.text.secondary || theme.palette.text.secondary,
+            color: theme.palette.text.secondary,
             '&.Mui-focused': {
-              color: theme.vars?.palette.primary.main || theme.palette.primary.main,
+              color: theme.palette.primary.main,
             },
           },
         }),
@@ -424,16 +391,16 @@ export const theme = createTheme({
         paper: ({ theme }) => ({
           borderRadius: 16,
           padding: 8,
-          backgroundColor: theme.vars?.palette.background.paper || theme.palette.background.paper,
-          border: `1px solid ${theme.vars?.palette.divider || theme.palette.divider}`,
+          backgroundColor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
         }),
       },
     },
     MuiBottomNavigation: {
       styleOverrides: {
         root: ({ theme }) => ({
-          backgroundColor: theme.vars?.palette.background.paper || theme.palette.background.paper,
-          borderTop: `1px solid ${theme.vars?.palette.divider || theme.palette.divider}`,
+          backgroundColor: theme.palette.background.paper,
+          borderTop: `1px solid ${theme.palette.divider}`,
           height: 64,
         }),
       },
@@ -441,9 +408,9 @@ export const theme = createTheme({
     MuiBottomNavigationAction: {
       styleOverrides: {
         root: ({ theme }) => ({
-          color: theme.vars?.palette.text.disabled || theme.palette.text.disabled,
+          color: theme.palette.text.disabled,
           '&.Mui-selected': {
-            color: theme.vars?.palette.primary.main || theme.palette.primary.main,
+            color: theme.palette.primary.main,
           },
           '&:focus-visible': {
             outline: `2px solid ${theme.palette.primary.main}`,
@@ -456,7 +423,7 @@ export const theme = createTheme({
     MuiAvatar: {
       styleOverrides: {
         root: ({ theme }) => ({
-          border: `2px solid ${theme.vars?.palette.divider || theme.palette.divider}`,
+          border: `2px solid ${theme.palette.divider}`,
         }),
       },
     },
@@ -470,10 +437,10 @@ export const theme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: ({ theme }) => ({
-          backgroundColor: theme.vars?.palette.background.paper || theme.palette.background.paper,
-          color: theme.vars?.palette.text.primary || theme.palette.text.primary,
+          backgroundColor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
           boxShadow: 'none',
-          borderBottom: `1px solid ${theme.vars?.palette.divider || theme.palette.divider}`,
+          borderBottom: `1px solid ${theme.palette.divider}`,
         }),
       },
     },
@@ -504,8 +471,8 @@ export const theme = createTheme({
     MuiDrawer: {
       styleOverrides: {
         paper: ({ theme }) => ({
-          backgroundColor: theme.vars?.palette.background.paper || theme.palette.background.paper,
-          borderRight: `1px solid ${theme.vars?.palette.divider || theme.palette.divider}`,
+          backgroundColor: theme.palette.background.paper,
+          borderRight: `1px solid ${theme.palette.divider}`,
         }),
       },
     },
@@ -581,8 +548,8 @@ export const theme = createTheme({
     MuiMenu: {
       styleOverrides: {
         paper: ({ theme }) => ({
-          backgroundColor: theme.vars?.palette.background.paper || theme.palette.background.paper,
-          border: `1px solid ${theme.vars?.palette.divider || theme.palette.divider}`,
+          backgroundColor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
           borderRadius: 8,
         }),
       },
@@ -609,9 +576,9 @@ export const theme = createTheme({
     MuiTooltip: {
       styleOverrides: {
         tooltip: ({ theme }) => ({
-          backgroundColor: theme.vars?.palette.background.paper || theme.palette.background.paper,
-          color: theme.vars?.palette.text.primary || theme.palette.text.primary,
-          border: `1px solid ${theme.vars?.palette.divider || theme.palette.divider}`,
+          backgroundColor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
+          border: `1px solid ${theme.palette.divider}`,
           fontSize: '0.75rem',
         }),
       },

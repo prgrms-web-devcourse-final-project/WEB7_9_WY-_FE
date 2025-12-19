@@ -25,19 +25,19 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PeopleIcon from '@mui/icons-material/People';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { MainLayout } from '@/components/layout';
 import { EventChip, ArtistAvatar } from '@/components/common';
-import UpcomingEventsSidebar from '@/components/calendar/UpcomingEventsSidebar';
-import NotificationPreferenceModal from '@/components/calendar/NotificationPreferenceModal';
-import { useAuthStore } from '@/stores/authStore';
+import UpcomingEventsSidebar from '@/components/kalendar/UpcomingEventsSidebar';
+import NotificationPreferenceModal from '@/components/kalendar/NotificationPreferenceModal';
 import { useArtistStore } from '@/stores/artistStore';
-import { mockEvents, mockArtists } from '@/lib/mockData';
+import { useEffectiveSelectedArtists } from '@/hooks/useEffectiveSelectedArtists';
 import { getArtistColor } from '@/lib/artistColors';
 import { scheduleApi } from '@/api/client';
-import type { CalendarEvent, EventType, MonthlySchedule, UpcomingEvent, ScheduleCategory } from '@/types';
+import type { KalendarEvent, EventType, MonthlySchedule, UpcomingEvent, ScheduleCategory } from '@/types';
 import { useRouter } from 'next/navigation';
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -46,15 +46,22 @@ const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const scheduleToEventType = (category: ScheduleCategory): EventType => {
   const mapping: Record<ScheduleCategory, EventType> = {
     'CONCERT': 'concert',
+    'FAN_MEETING': 'fansign',
     'FAN_SIGN': 'fansign',
     'BROADCAST': 'broadcast',
+    'ONLINE_RELEASE': 'broadcast',
     'BIRTHDAY': 'birthday',
+    'FESTIVAL': 'festival',
+    'AWARD_SHOW': 'award',
+    'ANNIVERSARY': 'anniversary',
+    'LIVE_STREAM': 'livestream',
+    'ETC': 'other',
   };
   return mapping[category] || 'concert';
 };
 
-// Helper: Convert MonthlySchedule to CalendarEvent
-const monthlyToCalendarEvent = (schedule: MonthlySchedule): CalendarEvent => {
+// Helper: Convert MonthlySchedule to KalendarEvent
+const monthlyToKalendarEvent = (schedule: MonthlySchedule): KalendarEvent => {
   const dateTime = new Date(schedule.scheduleTime);
   return {
     id: String(schedule.scheduleId),
@@ -68,15 +75,20 @@ const monthlyToCalendarEvent = (schedule: MonthlySchedule): CalendarEvent => {
   };
 };
 
-export default function CalendarPage() {
+export default function KalendarPage() {
   const router = useRouter();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const isLargeDesktop = useMediaQuery(theme.breakpoints.up('lg'));
-  const { selectedArtists, guestSelectedArtists, isGuestMode, isLoggedIn } = useAuthStore();
+  const {
+    effectiveArtists: effectiveSelectedArtists,
+    isHydrated,
+    isLoggedIn,
+    isGuestMode,
+  } = useEffectiveSelectedArtists();
   const { artists: storeArtists, fetchArtists } = useArtistStore();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<KalendarEvent | null>(null);
   const [filterArtists, setFilterArtists] = useState<string[]>([]);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   const [notificationEnabled, setNotificationEnabled] = useState<Record<string, boolean>>({});
@@ -86,15 +98,9 @@ export default function CalendarPage() {
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Use guest selections if in guest mode, otherwise use logged-in user selections
-  const effectiveSelectedArtists = isGuestMode && !isLoggedIn ? guestSelectedArtists : selectedArtists;
-
-  // Hydration 상태 체크 (Zustand persist가 localStorage에서 데이터를 복원할 때까지 대기)
+  // 아티스트 목록이 없으면 가져오기
   useEffect(() => {
-    setIsHydrated(true);
-    // 아티스트 목록이 없으면 가져오기
     if (storeArtists.length === 0) {
       fetchArtists();
     }
@@ -145,22 +151,20 @@ export default function CalendarPage() {
     fetchCalendarData();
   }, [year, month, filterArtists, isGuestMode, isLoggedIn, isHydrated]);
 
-  const calendarDays = useMemo(() => {
+  const kalendarDays = useMemo(() => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startDay = firstDay.getDay();
     const daysInMonth = lastDay.getDate();
 
-    const days: Array<{ date: number; events: CalendarEvent[] } | null> = [];
+    const days: Array<{ date: number; events: KalendarEvent[] } | null> = [];
 
     for (let i = 0; i < startDay; i++) {
       days.push(null);
     }
 
-    // Use API data if logged in, otherwise use mock data
-    const sourceEvents = (isGuestMode && !isLoggedIn)
-      ? mockEvents
-      : monthlySchedules.map(monthlyToCalendarEvent);
+    // Use API data only (no mock data fallback)
+    const sourceEvents = monthlySchedules.map(monthlyToKalendarEvent);
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -173,7 +177,7 @@ export default function CalendarPage() {
     }
 
     return days;
-  }, [year, month, filterArtists, monthlySchedules, isGuestMode, isLoggedIn]);
+  }, [year, month, filterArtists, monthlySchedules]);
 
   const handlePrevMonth = () => {
     setCurrentDate(new Date(year, month - 1, 1));
@@ -205,8 +209,8 @@ export default function CalendarPage() {
     month === today.getMonth() &&
     day === today.getDate();
 
-  // API에서 가져온 아티스트가 있으면 사용, 없으면 mockArtists 사용
-  const displayArtists = storeArtists.length > 0 ? storeArtists : mockArtists;
+  // API에서 가져온 아티스트 사용 (no mock data fallback)
+  const displayArtists = storeArtists;
   const followingArtists = displayArtists.filter((a) =>
     effectiveSelectedArtists.includes(a.id)
   );
@@ -216,8 +220,8 @@ export default function CalendarPage() {
     return theme.palette.event[eventType];
   };
 
-  // Calendar content component
-  const CalendarContent = () => (
+  // Kalendar content component
+  const KalendarContent = () => (
     <Box sx={{ p: { xs: 0, sm: 2, md: 3 }, flex: 1, bgcolor: 'background.paper' }}>
       {/* Loading State */}
       {isLoading && (
@@ -248,16 +252,41 @@ export default function CalendarPage() {
 
       {/* Header Section */}
       <Box sx={{ mb: { xs: 1.5, sm: 2, md: 3 }, px: { xs: 1, sm: 0 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, mb: 0.5 }}>
-          <CalendarTodayIcon sx={{ fontSize: { xs: 24, sm: 28 }, color: 'primary.main' }} />
-          <Typography
-            variant="h2"
-            color="text.primary"
-            fontWeight={700}
-            sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' } }}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
+            <CalendarTodayIcon sx={{ fontSize: { xs: 24, sm: 28 }, color: 'primary.main' }} />
+            <Typography
+              variant="h2"
+              color="text.primary"
+              fontWeight={700}
+              sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' } }}
+            >
+              일정 한 눈에 보기
+            </Typography>
+          </Box>
+          {/* 내 아티스트 관리 버튼 */}
+          <Button
+            variant="text"
+            size="small"
+            startIcon={<PeopleIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+            onClick={() => {
+              if (!isLoggedIn) {
+                router.push('/login?redirect=/artists');
+              } else {
+                router.push('/artists');
+              }
+            }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              '&:hover': {
+                color: 'primary.main',
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
+              },
+            }}
           >
-            일정 한 눈에 보기
-          </Typography>
+            아티스트 관리
+          </Button>
         </Box>
         <Typography
           variant="body2"
@@ -400,7 +429,7 @@ export default function CalendarPage() {
           gap: { xs: '1px', sm: 0.5 },
         }}
       >
-        {calendarDays.map((day, index) => (
+        {kalendarDays.map((day, index) => (
           <Box
             key={index}
             sx={{
@@ -490,7 +519,14 @@ export default function CalendarPage() {
 
       {/* Event Legend */}
       <Box sx={{ display: 'flex', gap: { xs: 1.5, sm: 2 }, mt: { xs: 1, sm: 2 }, px: { xs: 1, sm: 0 }, flexWrap: 'wrap' }}>
-        {(['concert', 'fansign', 'broadcast', 'birthday'] as EventType[]).map((type) => (
+        {([
+          { type: 'concert' as EventType, label: '콘서트' },
+          { type: 'fansign' as EventType, label: '팬사인회' },
+          { type: 'broadcast' as EventType, label: '방송' },
+          { type: 'birthday' as EventType, label: '생일' },
+          { type: 'festival' as EventType, label: '페스티벌' },
+          { type: 'award' as EventType, label: '시상식' },
+        ]).map(({ type, label }) => (
           <Box key={type} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Box
               sx={{
@@ -501,10 +537,7 @@ export default function CalendarPage() {
               }}
             />
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.625rem', sm: '0.75rem' } }}>
-              {type === 'concert' && '콘서트'}
-              {type === 'fansign' && '팬사인회'}
-              {type === 'broadcast' && '방송'}
-              {type === 'birthday' && '생일'}
+              {label}
             </Typography>
           </Box>
         ))}
@@ -534,7 +567,7 @@ export default function CalendarPage() {
               pl: 3,
             }}
           >
-            <CalendarContent />
+            <KalendarContent />
           </Box>
 
           {/* Upcoming Events Sidebar - responsive width */}
@@ -553,15 +586,14 @@ export default function CalendarPage() {
             <UpcomingEventsSidebar
               upcomingEvents={upcomingEvents}
               selectedArtistIds={filterArtists}
-              isGuestMode={isGuestMode && !isLoggedIn}
               isLoading={isLoading}
             />
           </Box>
         </Box>
       ) : (
-        /* Mobile: Calendar + Upcoming Events below */
+        /* Mobile: Kalendar + Upcoming Events below */
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <CalendarContent />
+          <KalendarContent />
 
           {/* Mobile Upcoming Events Section */}
           <Box
@@ -575,7 +607,6 @@ export default function CalendarPage() {
             <UpcomingEventsSidebar
               upcomingEvents={upcomingEvents}
               selectedArtistIds={filterArtists}
-              isGuestMode={isGuestMode && !isLoggedIn}
               isLoading={isLoading}
             />
           </Box>

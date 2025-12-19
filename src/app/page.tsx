@@ -10,9 +10,9 @@ export default function HomePage() {
   const { isLoggedIn, isOnboarded, isGuestMode, guestSelectedArtists } = useAuthStore();
 
   useEffect(() => {
-    // Guest mode with selected artists -> show calendar
+    // Guest mode with selected artists -> show kalendar
     if (!isLoggedIn && isGuestMode && guestSelectedArtists.length > 0) {
-      router.replace('/calendar');
+      router.replace('/kalendar');
       return;
     }
 
@@ -28,9 +28,9 @@ export default function HomePage() {
       return;
     }
 
-    // Logged in and onboarded -> calendar
+    // Logged in and onboarded -> kalendar
     if (isLoggedIn && isOnboarded) {
-      router.replace('/calendar');
+      router.replace('/kalendar');
       return;
     }
   }, [isLoggedIn, isOnboarded, isGuestMode, guestSelectedArtists, router]);

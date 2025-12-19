@@ -13,6 +13,11 @@ const eventTypeLabels: Record<EventType, string> = {
   fansign: '팬사인회',
   broadcast: '방송',
   birthday: '생일',
+  festival: '페스티벌',
+  award: '시상식',
+  anniversary: '기념일',
+  livestream: '라이브',
+  other: '기타',
 };
 
 export default function EventChip({ eventType, sx, ...props }: EventChipProps) {

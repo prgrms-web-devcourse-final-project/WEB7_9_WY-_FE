@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { authApiService, userApi, setAccessToken, getAccessToken } from '@/api/client';
 import { useAuthStore } from '@/stores/authStore';
-import type { User } from '@/types';
+import type { UserProfile } from '@/types';
 
 // Query keys
 export const authKeys = {
@@ -32,11 +32,17 @@ export function useUser() {
         return null;
       }
 
-      const user: User = {
+      const user: UserProfile = {
         id: String((data as { userId?: number }).userId || data.email || ''),
         name: data.nickname || '',
         email: data.email || '',
         avatar: data.profileImage,
+        nickname: data.nickname || '',
+        profileImage: data.profileImage,
+        gender: data.gender as 'MALE' | 'FEMALE' | undefined,
+        age: data.age,
+        level: data.level,
+        emailVerified: (data as { emailVerified?: boolean }).emailVerified,
       };
 
       setUser(user);
@@ -77,11 +83,17 @@ export function useLogin() {
       }
 
       if (userData) {
-        const user: User = {
+        const user: UserProfile = {
           id: String(loginResponse.userId || ''),
           name: userData.nickname || '',
           email: userData.email || '',
           avatar: userData.profileImage,
+          nickname: userData.nickname || '',
+          profileImage: userData.profileImage,
+          gender: userData.gender as 'MALE' | 'FEMALE' | undefined,
+          age: userData.age,
+          level: userData.level,
+          emailVerified: (userData as { emailVerified?: boolean }).emailVerified,
         };
         return user;
       }

@@ -7,6 +7,24 @@ export interface User {
   createdAt?: string;
 }
 
+// 확장된 사용자 프로필 타입 (백엔드 API 응답과 일치)
+export interface UserProfile extends User {
+  nickname: string;           // 백엔드 원본 필드
+  profileImage?: string;      // 백엔드 원본 필드
+  gender?: 'MALE' | 'FEMALE'; // 사용자 성별 (ANY는 파티용)
+  birthDate?: string;         // ISO 8601 date format
+  emailVerified?: boolean;
+  level?: number;
+  age?: number;               // 서버에서 계산된 값
+}
+
+// 프로필 수정 요청 타입
+export interface UpdateProfileRequest {
+  nickname?: string;
+  gender?: 'MALE' | 'FEMALE';
+  birthDate?: string;
+}
+
 export interface SignupData {
   name: string;
   email: string;
@@ -28,11 +46,22 @@ export interface Artist {
   fanCount: number;
 }
 
-// Calendar & Event Types
-export type EventType = 'concert' | 'fansign' | 'broadcast' | 'birthday';
-export type ScheduleCategory = 'CONCERT' | 'FAN_SIGN' | 'BROADCAST' | 'BIRTHDAY';
+// Kalendar & Event Types
+export type EventType = 'concert' | 'fansign' | 'broadcast' | 'birthday' | 'festival' | 'award' | 'anniversary' | 'livestream' | 'other';
+export type ScheduleCategory =
+  | 'CONCERT'
+  | 'FAN_MEETING'
+  | 'BROADCAST'
+  | 'ONLINE_RELEASE'
+  | 'BIRTHDAY'
+  | 'FESTIVAL'
+  | 'AWARD_SHOW'
+  | 'ANNIVERSARY'
+  | 'FAN_SIGN'
+  | 'LIVE_STREAM'
+  | 'ETC';
 
-export interface CalendarEvent {
+export interface KalendarEvent {
   id: string;
   title: string;
   date: string;
@@ -61,6 +90,7 @@ export interface MonthlySchedule {
 
 export interface UpcomingEvent {
   scheduleId: number;
+  artistId: number;
   artistName: string;
   title: string;
   scheduleCategory: ScheduleCategory;
@@ -71,32 +101,79 @@ export interface UpcomingEvent {
   location: string;
 }
 
-export interface CalendarResponse {
+export interface KalendarResponse {
   monthlySchedules: MonthlySchedule[];
   upcomingEvents: UpcomingEvent[];
 }
 
-export interface CalendarDay {
+export interface KalendarDay {
   date: number;
   month: number;
   year: number;
-  events: CalendarEvent[];
+  events: KalendarEvent[];
   isCurrentMonth: boolean;
   isToday: boolean;
 }
 
-// Party Types
-export type PartyType = 'departure' | 'return';
-export type PartyStatus = 'recruiting' | 'confirmed' | 'closed';
+// Party Types (Backend API Enum aligned)
+export type PartyType = 'LEAVE' | 'ARRIVE';
+export type PartyStatus = 'RECRUITING' | 'CLOSED' | 'COMPLETED' | 'CANCELLED';
+export type ApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type TransportType = 'TAXI' | 'CARPOOL' | 'SUBWAY' | 'BUS' | 'WALK';
+export type PreferredAge = 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'NONE';
+export type Gender = 'MALE' | 'FEMALE' | 'ANY';
+export type MemberRole = 'LEADER' | 'MEMBER';
 
+// API Response Raw Types (중첩 구조)
+export interface PartyLeader {
+  userId: number;
+  nickname: string;
+  age: number;
+  gender: Gender;
+  profileImage: string | null;
+}
+
+export interface PartyEventInfo {
+  eventId: number;
+  eventTitle: string;
+  venueName: string;
+}
+
+export interface PartyInfo {
+  partyType: PartyType;
+  partyName: string;
+  departureLocation: string;
+  arrivalLocation: string;
+  transportType: TransportType;
+  maxMembers: number;
+  currentMembers: number;
+  description: string;
+  status: PartyStatus;
+}
+
+export interface RawPartyResponse {
+  partyId: number;
+  leader: PartyLeader;
+  event: PartyEventInfo;
+  partyInfo: PartyInfo;
+  isMyParty: boolean;
+  isApplied: boolean;
+}
+
+// Frontend Party Model (플랫 구조로 변환된 형태)
 export interface Party {
   id: string;
   title: string;
   eventId: string;
   eventName?: string;
   eventDate?: string;
-  hostId: string;
+  venueName?: string;
+  hostId?: string;
   hostName?: string;
+  leaderNickname?: string;
+  leaderAge?: number;
+  leaderGender?: Gender;
+  leaderProfileImage?: string;
   type: PartyType;
   departure: string;
   arrival: string;
@@ -106,10 +183,14 @@ export interface Party {
   status: PartyStatus;
   description?: string;
   createdAt?: string;
-  // API specific fields
-  transportType?: 'TAXI' | 'CARPOOL' | 'SUBWAY' | 'BUS' | 'WALK';
-  preferredGender?: 'MALE' | 'FEMALE' | 'ANY';
-  preferredAge?: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'NONE';
+  transportType?: TransportType;
+  preferredGender?: Gender;
+  preferredAge?: PreferredAge;
+  isMyParty?: boolean;
+  isApplied?: boolean;
+  // 내가 신청한 파티용 필드
+  applicationId?: number;
+  applicationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
 export interface PartyApplicant {
@@ -120,7 +201,7 @@ export interface PartyApplicant {
   userAvatar?: string;
   message?: string;
   appliedAt: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: ApplicationStatus;
 }
 
 // Chat Types
@@ -266,7 +347,7 @@ export interface PaginatedResponse<T> {
 }
 
 // Filter Types
-export interface CalendarFilter {
+export interface KalendarFilter {
   artistIds: string[];
   eventTypes: EventType[];
 }

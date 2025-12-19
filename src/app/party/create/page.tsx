@@ -12,21 +12,19 @@ import {
   MenuItem,
   IconButton,
   Alert,
-  CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { MainLayout } from '@/components/layout';
-import { GradientButton } from '@/components/common';
+import { GradientButton, LoadingSpinner } from '@/components/common';
 import { usePartyStore } from '@/stores/partyStore';
-import { useAuthStore } from '@/stores/authStore';
 import { scheduleApi } from '@/api/client';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 export default function CreatePartyPage() {
+  const { isLoading: isAuthLoading, isAllowed } = useAuthGuard();
   const router = useRouter();
   const { createParty, isLoading, error } = usePartyStore();
-  const { isLoggedIn } = useAuthStore();
 
-  const [hasMounted, setHasMounted] = useState(false);
   const [schedules, setSchedules] = useState<{ scheduleId: number; title: string }[]>([]);
   const [scheduleId, setScheduleId] = useState<number | ''>('');
   const [partyName, setPartyName] = useState('');
@@ -39,19 +37,8 @@ export default function CreatePartyPage() {
   const [preferredAge, setPreferredAge] = useState<'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'NONE'>('NONE');
   const [description, setDescription] = useState('');
 
-  // Wait for hydration to complete
   useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  useEffect(() => {
-    // Only check login after hydration is complete
-    if (!hasMounted) return;
-
-    if (!isLoggedIn) {
-      router.push('/login');
-      return;
-    }
+    if (!isAllowed) return;
 
     // Load schedule list
     scheduleApi.getPartyList()
@@ -73,7 +60,7 @@ export default function CreatePartyPage() {
         // API 에러 시 빈 배열 유지
         setSchedules([]);
       });
-  }, [hasMounted, isLoggedIn, router]);
+  }, [isAllowed]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,15 +88,12 @@ export default function CreatePartyPage() {
     }
   };
 
-  // Show loading while waiting for hydration
-  if (!hasMounted) {
-    return (
-      <MainLayout hideNavigation>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-          <CircularProgress />
-        </Box>
-      </MainLayout>
-    );
+  if (isAuthLoading) {
+    return <LoadingSpinner fullScreen message="로딩 중..." />;
+  }
+
+  if (!isAllowed) {
+    return null;
   }
 
   return (

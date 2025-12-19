@@ -27,7 +27,8 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import { useChatStore } from '@/stores/chatStore';
 import { useAuthStore } from '@/stores/authStore';
-import { mockChatRooms, mockChatMessages } from '@/lib/mockData';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { LoadingSpinner } from '@/components/common';
 
 const fadeInUp = keyframes`
   from {
@@ -63,6 +64,7 @@ const slideInRight = keyframes`
 `;
 
 export default function ChatRoomPage() {
+  const { isLoading: isAuthLoading, isAllowed } = useAuthGuard();
   const router = useRouter();
   const params = useParams();
   const theme = useTheme();
@@ -72,12 +74,10 @@ export default function ChatRoomPage() {
   const { user } = useAuthStore();
   const {
     chatRooms,
-    setChatRooms,
     addChatRoom,
     setCurrentRoom,
     getCurrentRoom,
     messages,
-    setMessages,
     sendMessage,
     participants,
     setParticipants,
@@ -88,30 +88,14 @@ export default function ChatRoomPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
-    if (chatRooms.length === 0) {
-      setChatRooms(mockChatRooms);
-    }
+    if (!isAllowed) return;
+    // TODO: Fetch chat rooms from API when available
     setCurrentRoom(chatId);
 
-    // Find room by id or partyId in mock data
-    const mockRoom = mockChatRooms.find((r) => r.id === chatId || r.partyId === chatId);
-
-    // Also check if room exists in store (for newly created parties)
+    // Check if room exists in store (for newly created parties)
     const existingRoom = chatRooms.find((r) => r.id === chatId || r.partyId === chatId);
 
-    if (mockRoom) {
-      const actualRoomId = mockRoom.id;
-
-      // Load messages for this room
-      if (!messages[actualRoomId] && mockChatMessages[actualRoomId]) {
-        setMessages(actualRoomId, mockChatMessages[actualRoomId]);
-      }
-
-      // Load participants
-      if (!participants[actualRoomId]) {
-        setParticipants(actualRoomId, mockRoom.participants);
-      }
-    } else if (!existingRoom && user) {
+    if (!existingRoom && user) {
       // Create a new chat room for newly created party
       const newRoom = {
         id: chatId,
@@ -132,7 +116,7 @@ export default function ChatRoomPage() {
       addChatRoom(newRoom);
       setParticipants(chatId, newRoom.participants);
     }
-  }, [chatId, chatRooms, setChatRooms, setCurrentRoom, messages, setMessages, participants, setParticipants, user, addChatRoom]);
+  }, [chatId, chatRooms, setCurrentRoom, participants, setParticipants, user, addChatRoom, isAllowed]);
 
   const currentRoom = getCurrentRoom();
   const actualRoomId = currentRoom?.id || chatId;
@@ -162,6 +146,14 @@ export default function ChatRoomPage() {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
   };
+
+  if (isAuthLoading) {
+    return <LoadingSpinner fullScreen message="로딩 중..." />;
+  }
+
+  if (!isAllowed) {
+    return null;
+  }
 
   if (!currentRoom) {
     return null;

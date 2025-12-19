@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import Providers from '@/providers/Providers';
 
 export const metadata: Metadata = {
-  title: 'Fandom App',
+  title: 'Kalendar',
   description: 'K-Pop 팬들을 위한 일정 관리 및 팬 커뮤니티 앱',
 };
 

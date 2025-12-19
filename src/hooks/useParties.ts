@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { partyApi } from '@/api/client';
 import { usePartyStore } from '@/stores/partyStore';
-import type { Party } from '@/types';
+import type { Party, RawPartyResponse, PartyType, PartyStatus } from '@/types';
 
 // Query keys
 export const partyKeys = {
@@ -16,47 +16,64 @@ export const partyKeys = {
   applicants: (id: string) => [...partyKeys.all, 'applicants', id] as const,
 };
 
-// Raw party data from API
-type RawPartyData = {
-  partyId?: number;
-  partyName?: string;
-  description?: string;
-  partyType?: string;
-  transportType?: string;
-  departureLocation?: string;
-  arrivalLocation?: string;
-  departureTime?: string;
-  currentMembers?: number;
-  maxMembers?: number;
-  status?: string;
-  hostId?: number;
-  hostName?: string;
-  scheduleId?: number;
-  eventName?: string;
-  preferredGender?: string;
-  preferredAge?: string;
+// 중첩 구조 API 응답인지 확인
+const isNestedStructure = (data: Record<string, unknown>): boolean => {
+  return 'partyId' in data && 'leader' in data && 'event' in data && 'partyInfo' in data;
 };
 
-// Map API response to Party type
-const mapPartyData = (p: RawPartyData): Party => ({
-  id: String(p.partyId || ''),
-  title: p.partyName || '',
-  description: p.description,
-  type: (p.partyType === 'LEAVE' ? 'departure' : 'return') as 'departure' | 'return',
+// 중첩 구조 API 응답을 Party로 변환
+const mapNestedPartyData = (raw: RawPartyResponse): Party => ({
+  id: String(raw.partyId),
+  title: raw.partyInfo.partyName,
+  type: raw.partyInfo.partyType,
+  status: raw.partyInfo.status,
+  eventId: String(raw.event.eventId),
+  eventName: raw.event.eventTitle,
+  venueName: raw.event.venueName,
+  hostId: String(raw.leader.userId),
+  hostName: raw.leader.nickname,
+  leaderNickname: raw.leader.nickname,
+  leaderAge: raw.leader.age,
+  leaderGender: raw.leader.gender,
+  leaderProfileImage: raw.leader.profileImage || undefined,
+  departure: raw.partyInfo.departureLocation,
+  arrival: raw.partyInfo.arrivalLocation,
+  transportType: raw.partyInfo.transportType,
+  maxMembers: raw.partyInfo.maxMembers,
+  currentMembers: raw.partyInfo.currentMembers,
+  description: raw.partyInfo.description,
+  isMyParty: raw.isMyParty,
+  isApplied: raw.isApplied,
+});
+
+// 플랫 구조 API 응답을 Party로 변환 (레거시 지원)
+const mapFlatPartyData = (p: Record<string, unknown>): Party => ({
+  id: String(p.partyId || p.id || ''),
+  title: (p.partyName as string) || '',
+  description: p.description as string | undefined,
+  type: ((p.partyType as string)?.toUpperCase() || 'LEAVE') as PartyType,
   transportType: (p.transportType as Party['transportType']) || 'TAXI',
-  departure: p.departureLocation || '',
-  arrival: p.arrivalLocation || '',
-  departureTime: p.departureTime || '',
-  currentMembers: p.currentMembers || 0,
-  maxMembers: p.maxMembers || 4,
-  status: (p.status?.toLowerCase() || 'recruiting') as 'recruiting' | 'confirmed' | 'closed',
+  departure: (p.departureLocation as string) || '',
+  arrival: (p.arrivalLocation as string) || '',
+  departureTime: (p.departureTime as string) || '',
+  currentMembers: (p.currentMembers as number) || 0,
+  maxMembers: (p.maxMembers as number) || 4,
+  status: ((p.status as string)?.toUpperCase() || 'RECRUITING') as PartyStatus,
   hostId: String(p.hostId || ''),
-  hostName: p.hostName,
+  hostName: p.hostName as string | undefined,
   eventId: String(p.scheduleId || ''),
-  eventName: p.eventName,
+  eventName: p.eventName as string | undefined,
   preferredGender: (p.preferredGender as Party['preferredGender']) || 'ANY',
   preferredAge: (p.preferredAge as Party['preferredAge']) || 'NONE',
 });
+
+// Map API response to Party type (중첩/플랫 구조 모두 지원)
+const mapPartyData = (p: Record<string, unknown>): Party => {
+  if (isNestedStructure(p)) {
+    return mapNestedPartyData(p as unknown as RawPartyResponse);
+  }
+  return mapFlatPartyData(p);
+};
 
 // Get all parties
 export function useParties(scheduleId?: number) {
@@ -81,8 +98,8 @@ export function useParties(scheduleId?: number) {
         throw new Error('파티 목록을 불러오는데 실패했습니다.');
       }
 
-      const responseData = data as { content?: RawPartyData[] } | RawPartyData[] | null;
-      const partiesArray: RawPartyData[] = Array.isArray(responseData)
+      const responseData = data as { content?: Record<string, unknown>[] } | Record<string, unknown>[] | null;
+      const partiesArray: Record<string, unknown>[] = Array.isArray(responseData)
         ? responseData
         : (responseData?.content || []);
 
@@ -104,8 +121,8 @@ export function useMyCreatedParties() {
         throw new Error('내가 만든 파티를 불러오는데 실패했습니다.');
       }
 
-      const responseData = data as { content?: RawPartyData[] } | RawPartyData[] | null;
-      const partiesArray: RawPartyData[] = Array.isArray(responseData)
+      const responseData = data as { content?: Record<string, unknown>[] } | Record<string, unknown>[] | null;
+      const partiesArray: Record<string, unknown>[] = Array.isArray(responseData)
         ? responseData
         : (responseData?.content || []);
 
@@ -125,8 +142,8 @@ export function useMyAppliedParties() {
         throw new Error('신청한 파티를 불러오는데 실패했습니다.');
       }
 
-      const responseData = data as { content?: RawPartyData[] } | RawPartyData[] | null;
-      const partiesArray: RawPartyData[] = Array.isArray(responseData)
+      const responseData = data as { content?: Record<string, unknown>[] } | Record<string, unknown>[] | null;
+      const partiesArray: Record<string, unknown>[] = Array.isArray(responseData)
         ? responseData
         : (responseData?.content || []);
 

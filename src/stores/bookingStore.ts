@@ -1,20 +1,23 @@
 import { create } from 'zustand';
-import type { BookingData, SeatSection, Seat, CalendarEvent, PaymentInfo, BuyerInfo, DeliveryInfo } from '@/types';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import type { BookingData, SeatSection, Seat, KalendarEvent, PaymentInfo, BuyerInfo, DeliveryInfo } from '@/types';
 
 interface BookingState {
-  currentEvent: CalendarEvent | null;
+  currentEvent: KalendarEvent | null;
   sections: SeatSection[];
   selectedSection: SeatSection | null;
   seats: Seat[];
   selectedSeats: string[];
+  selectedScheduleId: number | null;
   bookingData: BookingData | null;
+  bookingHistory: BookingData[];
   step: 'event' | 'section' | 'seats' | 'confirm' | 'payment' | 'complete';
   isLoading: boolean;
   error: string | null;
 }
 
 interface BookingActions {
-  setCurrentEvent: (event: CalendarEvent | null) => void;
+  setCurrentEvent: (event: KalendarEvent | null) => void;
   setSections: (sections: SeatSection[]) => void;
   selectSection: (section: SeatSection | null) => void;
   setSeats: (seats: Seat[]) => void;
@@ -22,6 +25,7 @@ interface BookingActions {
   deselectSeat: (seatId: string) => void;
   toggleSeat: (seatId: string) => void;
   clearSelectedSeats: () => void;
+  setSelectedScheduleId: (scheduleId: number | null) => void;
   setBookingData: (data: BookingData | null) => void;
   setBuyerInfo: (info: BuyerInfo) => void;
   setDeliveryInfo: (info: DeliveryInfo) => void;
@@ -30,6 +34,7 @@ interface BookingActions {
   processPayment: (paymentInfo: PaymentInfo) => Promise<boolean>;
   calculateTotalPrice: () => number;
   getSelectedSeatDetails: () => Seat[];
+  getBookingHistory: () => BookingData[];
   resetBooking: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -37,18 +42,22 @@ interface BookingActions {
 
 type BookingStore = BookingState & BookingActions;
 
-export const useBookingStore = create<BookingStore>()((set, get) => ({
+export const useBookingStore = create<BookingStore>()(
+  persist(
+    (set, get) => ({
   currentEvent: null,
   sections: [],
   selectedSection: null,
   seats: [],
   selectedSeats: [],
+  selectedScheduleId: null,
   bookingData: null,
+  bookingHistory: [],
   step: 'event',
   isLoading: false,
   error: null,
 
-  setCurrentEvent: (event: CalendarEvent | null) => {
+  setCurrentEvent: (event: KalendarEvent | null) => {
     set({ currentEvent: event, step: event ? 'section' : 'event' });
   },
 
@@ -109,6 +118,10 @@ export const useBookingStore = create<BookingStore>()((set, get) => ({
         s.status === 'selected' ? { ...s, status: 'available' as const } : s
       ),
     });
+  },
+
+  setSelectedScheduleId: (scheduleId: number | null) => {
+    set({ selectedScheduleId: scheduleId });
   },
 
   setBookingData: (data: BookingData | null) => {
@@ -176,8 +189,11 @@ export const useBookingStore = create<BookingStore>()((set, get) => ({
         termsAgreed: currentBookingData?.termsAgreed,
       };
 
+      // 예매 내역에 추가
+      const { bookingHistory } = get();
       set({
         bookingData,
+        bookingHistory: [...bookingHistory, bookingData],
         step: 'complete',
         isLoading: false,
       });
@@ -205,6 +221,10 @@ export const useBookingStore = create<BookingStore>()((set, get) => ({
     return seats.filter((s) => selectedSeats.includes(s.id));
   },
 
+  getBookingHistory: () => {
+    return get().bookingHistory;
+  },
+
   resetBooking: () => {
     set({
       currentEvent: null,
@@ -212,6 +232,7 @@ export const useBookingStore = create<BookingStore>()((set, get) => ({
       selectedSection: null,
       seats: [],
       selectedSeats: [],
+      selectedScheduleId: null,
       bookingData: null,
       step: 'event',
       error: null,
@@ -225,4 +246,13 @@ export const useBookingStore = create<BookingStore>()((set, get) => ({
   setError: (error: string | null) => {
     set({ error });
   },
-}));
+}),
+    {
+      name: 'booking-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        bookingHistory: state.bookingHistory,
+      }),
+    }
+  )
+);

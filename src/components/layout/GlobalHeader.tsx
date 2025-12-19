@@ -25,21 +25,17 @@ import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LoginIcon from '@mui/icons-material/Login';
+import EditIcon from '@mui/icons-material/Edit';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import PeopleIcon from '@mui/icons-material/People';
 import GroupsIcon from '@mui/icons-material/Groups';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
-import { useThemeMode } from '@/providers/ThemeModeProvider';
 import NotificationDropdown from './NotificationDropdown';
 import type { Theme, SxProps } from '@mui/material/styles';
 
 const navItems = [
-  { label: '캘린더', icon: <CalendarMonthIcon fontSize="small" />, path: '/calendar' },
-  { label: '아티스트', icon: <PeopleIcon fontSize="small" />, path: '/artists' },
+  { label: '캘린더', icon: <CalendarMonthIcon fontSize="small" />, path: '/kalendar' },
   { label: '파티', icon: <GroupsIcon fontSize="small" />, path: '/party' },
   { label: '채팅', icon: <ChatBubbleIcon fontSize="small" />, path: '/chats' },
   { label: 'MY', icon: <PersonIcon fontSize="small" />, path: '/mypage' },
@@ -88,12 +84,15 @@ export default function GlobalHeader() {
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const { user, isLoggedIn, isGuestMode, logout } = useAuthStore();
   const { unreadCount } = useNotificationStore();
-  const { resolvedMode, setMode } = useThemeMode();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
 
   // 현재 활성 탭 인덱스 찾기
+  // /artists 경로도 캘린더 탭에 속함
   const getCurrentTabIndex = () => {
+    if (pathname.startsWith('/artists')) {
+      return 0; // 캘린더 탭 인덱스
+    }
     const index = navItems.findIndex((item) => pathname.startsWith(item.path));
     return index >= 0 ? index : 0;
   };
@@ -121,10 +120,6 @@ export default function GlobalHeader() {
     router.push(navItems[newValue].path);
   };
 
-  const toggleTheme = () => {
-    setMode(resolvedMode === 'dark' ? 'light' : 'dark');
-  };
-
   const handleNotificationOpen = (event: React.MouseEvent<HTMLElement>) => {
     setNotificationAnchorEl(event.currentTarget);
   };
@@ -147,7 +142,7 @@ export default function GlobalHeader() {
         <Typography
           variant="h5"
           component="div"
-          onClick={() => router.push('/calendar')}
+          onClick={() => router.push('/kalendar')}
           sx={{
             cursor: 'pointer',
             color: theme.palette.primary.main,
@@ -155,7 +150,7 @@ export default function GlobalHeader() {
             flexShrink: 0,
           }}
         >
-          Fandom
+          Kalendar
         </Typography>
 
         {/* Center: Navigation Tabs (Desktop only) */}
@@ -185,26 +180,8 @@ export default function GlobalHeader() {
           </Box>
         )}
 
-        {/* Right: Theme Toggle, Notifications & Profile */}
+        {/* Right: Notifications & Profile */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-          {/* Theme Toggle */}
-          <IconButton
-            onClick={toggleTheme}
-            size="small"
-            aria-label={resolvedMode === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
-            sx={{
-              color: theme.palette.text.primary,
-              opacity: 0.8,
-              '&:hover': {
-                color: theme.palette.primary.main,
-                opacity: 1,
-                bgcolor: alpha(theme.palette.primary.main, 0.08),
-              },
-            }}
-          >
-            {resolvedMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
-
           {isLoggedIn ? (
             <>
               <IconButton
@@ -327,21 +304,40 @@ export default function GlobalHeader() {
               </Menu>
             </>
           ) : (
-            <Button
-              startIcon={<LoginIcon />}
-              onClick={() => router.push('/login')}
-              size="small"
-              sx={{
-                color: theme.palette.text.primary,
-                fontWeight: 500,
-                '&:hover': {
-                  color: theme.palette.primary.main,
-                  bgcolor: alpha(theme.palette.primary.main, 0.08),
-                },
-              }}
-            >
-              {isGuestMode ? '로그인' : '로그인'}
-            </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {isGuestMode && (
+                <Button
+                  startIcon={<EditIcon />}
+                  onClick={() => router.push('/onboarding')}
+                  size="small"
+                  sx={{
+                    color: theme.palette.text.primary,
+                    fontWeight: 500,
+                    '&:hover': {
+                      color: theme.palette.primary.main,
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                    },
+                  }}
+                >
+                  아티스트 편집
+                </Button>
+              )}
+              <Button
+                startIcon={<LoginIcon />}
+                onClick={() => router.push('/login')}
+                size="small"
+                sx={{
+                  color: theme.palette.text.primary,
+                  fontWeight: 500,
+                  '&:hover': {
+                    color: theme.palette.primary.main,
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  },
+                }}
+              >
+                로그인
+              </Button>
+            </Box>
           )}
         </Box>
       </Toolbar>

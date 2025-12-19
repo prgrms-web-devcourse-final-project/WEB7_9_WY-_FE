@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -10,32 +9,33 @@ import {
   CardContent,
   Button,
   Divider,
-  IconButton,
   CircularProgress,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
+import IconButton from "@mui/material/IconButton";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { MainLayout } from "@/components/layout";
-import { ArtistAvatar } from "@/components/common";
+import { ArtistAvatar, LoadingSpinner } from "@/components/common";
 import { useArtistStore } from "@/stores/artistStore";
-import { mockArtists } from "@/lib/mockData";
 import type { Artist } from "@/types";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
 
 interface ArtistCardProps {
   artist: Artist;
   isFollowing: boolean;
   onToggleFollow: (id: string) => void;
-  onNavigate: (id: string) => void;
 }
 
 function ArtistCard({
   artist,
   isFollowing,
   onToggleFollow,
-  onNavigate,
 }: ArtistCardProps) {
   const [isFollowLoading, setIsFollowLoading] = useState(false);
 
@@ -58,19 +58,7 @@ function ArtistCard({
         },
       }}
     >
-      <Box sx={{ p: 2, position: "relative" }}>
-        <IconButton
-          size="small"
-          onClick={() => onNavigate(artist.id)}
-          sx={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            color: "text.secondary",
-          }}
-        >
-          <ChevronRightIcon fontSize="small" />
-        </IconButton>
+      <Box sx={{ p: 2 }}>
         <Box
           sx={{
             display: "flex",
@@ -173,34 +161,94 @@ function EmptyFollowingState() {
 }
 
 export default function ArtistsPage() {
-  const router = useRouter();
+  const { isLoading: isAuthLoading, isAllowed } = useAuthGuard();
   const { artists, followingArtists, isLoading, error, fetchArtists, fetchFollowing, toggleFollow } =
     useArtistStore();
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    if (!isAllowed) return;
     // Fetch artists and following status on mount
     fetchArtists();
     fetchFollowing().catch(() => {
       // Ignore error if user is not logged in
     });
-  }, [fetchArtists, fetchFollowing]);
+  }, [fetchArtists, fetchFollowing, isAllowed]);
 
-  const allArtists = artists.length > 0 ? artists : mockArtists;
+  const allArtists = artists;
+
+  // 검색어로 아티스트 필터링
+  const filteredArtists = useMemo(() => {
+    if (!searchQuery.trim()) return allArtists;
+    const query = searchQuery.toLowerCase().trim();
+    return allArtists.filter(
+      (artist) =>
+        artist.name.toLowerCase().includes(query) ||
+        (artist.shortName && artist.shortName.toLowerCase().includes(query))
+    );
+  }, [allArtists, searchQuery]);
 
   const followingArtistsList = useMemo(() => {
-    return allArtists.filter((artist) => followingArtists.includes(artist.id));
-  }, [allArtists, followingArtists]);
+    return filteredArtists.filter((artist) => followingArtists.includes(artist.id));
+  }, [filteredArtists, followingArtists]);
 
-  const handleNavigate = (id: string) => {
-    router.push(`/artists/${id}`);
-  };
+  // 팔로우하지 않은 아티스트 목록 (모든 아티스트 섹션용)
+  const notFollowingArtistsList = useMemo(() => {
+    return filteredArtists.filter((artist) => !followingArtists.includes(artist.id));
+  }, [filteredArtists, followingArtists]);
+
+  if (isAuthLoading) {
+    return <LoadingSpinner fullScreen message="로딩 중..." />;
+  }
+
+  if (!isAllowed) {
+    return null;
+  }
 
   return (
     <MainLayout>
       <Box sx={{ p: { xs: 2, md: 3 } }}>
-        <Typography variant="h2" sx={{ mb: 4 }}>
+        <Typography variant="h2" sx={{ mb: 3 }}>
           아티스트
         </Typography>
+
+        {/* 검색 필드 */}
+        <TextField
+          fullWidth
+          placeholder="아티스트 이름으로 검색"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{ mb: 3 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery && (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => setSearchQuery("")}
+                    edge="end"
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+
+        {/* 검색 결과가 없을 때 */}
+        {searchQuery && filteredArtists.length === 0 && (
+          <Box sx={{ textAlign: "center", py: 4 }}>
+            <Typography color="text.secondary">
+              &quot;{searchQuery}&quot;에 대한 검색 결과가 없습니다
+            </Typography>
+          </Box>
+        )}
 
         {/* Error message */}
         {error && (
@@ -216,63 +264,65 @@ export default function ArtistsPage() {
           </Box>
         )}
 
-        {/* 팔로잉 섹션 */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-            <FavoriteIcon sx={{ fontSize: 20, color: "secondary.main" }} />
-            <Typography variant="h3">내가 팔로우한 아티스트</Typography>
-            {followingArtists.length > 0 && (
-              <Typography variant="body2" color="text.secondary">
-                ({followingArtists.length})
-              </Typography>
+        {/* 팔로잉 섹션 - 검색 중 결과 없으면 숨김 */}
+        {(!searchQuery || followingArtistsList.length > 0) && (
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+              <FavoriteIcon sx={{ fontSize: 20, color: "secondary.main" }} />
+              <Typography variant="h3">내가 팔로우한 아티스트</Typography>
+              {followingArtistsList.length > 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  ({followingArtistsList.length})
+                </Typography>
+              )}
+            </Box>
+
+            {followingArtistsList.length === 0 && !searchQuery ? (
+              <EmptyFollowingState />
+            ) : (
+              <Grid container spacing={2}>
+                {followingArtistsList.map((artist) => (
+                  <Grid size={{ xs: 6, sm: 4 }} key={artist.id}>
+                    <ArtistCard
+                      artist={artist}
+                      isFollowing={true}
+                      onToggleFollow={toggleFollow}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
             )}
           </Box>
+        )}
 
-          {followingArtistsList.length === 0 ? (
-            <EmptyFollowingState />
-          ) : (
+        {/* Divider - 양쪽 섹션 모두 표시될 때만 */}
+        {(!searchQuery || (followingArtistsList.length > 0 && notFollowingArtistsList.length > 0)) && (
+          <Divider sx={{ my: 4 }} />
+        )}
+
+        {/* 팔로우하지 않은 아티스트 섹션 */}
+        {notFollowingArtistsList.length > 0 && (
+          <Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+              <Typography variant="h3">다른 아티스트</Typography>
+              <Typography variant="body2" color="text.secondary">
+                ({notFollowingArtistsList.length})
+              </Typography>
+            </Box>
+
             <Grid container spacing={2}>
-              {followingArtistsList.map((artist) => (
+              {notFollowingArtistsList.map((artist) => (
                 <Grid size={{ xs: 6, sm: 4 }} key={artist.id}>
                   <ArtistCard
                     artist={artist}
-                    isFollowing={true}
+                    isFollowing={false}
                     onToggleFollow={toggleFollow}
-                    onNavigate={handleNavigate}
                   />
                 </Grid>
               ))}
             </Grid>
-          )}
-        </Box>
-
-        <Divider sx={{ my: 4 }} />
-
-        {/* 전체 아티스트 섹션 */}
-        <Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-            <Typography variant="h3">모든 아티스트</Typography>
-            <Typography variant="body2" color="text.secondary">
-              ({allArtists.length})
-            </Typography>
           </Box>
-
-          <Grid container spacing={2}>
-            {allArtists.map((artist) => {
-              const isFollowing = followingArtists.includes(artist.id);
-              return (
-                <Grid size={{ xs: 6, sm: 4 }} key={artist.id}>
-                  <ArtistCard
-                    artist={artist}
-                    isFollowing={isFollowing}
-                    onToggleFollow={toggleFollow}
-                    onNavigate={handleNavigate}
-                  />
-                </Grid>
-              );
-            })}
-          </Grid>
-        </Box>
+        )}
       </Box>
     </MainLayout>
   );

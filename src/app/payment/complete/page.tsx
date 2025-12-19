@@ -44,7 +44,7 @@ export default function PaymentCompletePage() {
 
   const handleGoHome = () => {
     resetBooking();
-    router.push('/calendar');
+    router.push('/kalendar');
   };
 
   const handleViewBookings = () => {

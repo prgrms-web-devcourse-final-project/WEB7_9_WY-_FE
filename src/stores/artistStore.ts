@@ -106,21 +106,42 @@ export const useArtistStore = create<ArtistStore>()(
         if (newArtistIds.length === 0) return;
 
         set({ isLoading: true, error: null });
-        try {
-          // 순차적으로 API 호출 (병렬 호출 시 서버 부하 방지)
-          for (const artistId of newArtistIds) {
+
+        const results: { success: string[]; failed: string[] } = { success: [], failed: [] };
+
+        // 순차적으로 API 호출 (병렬 호출 시 서버 부하 방지)
+        // 개별 실패 시에도 계속 진행 (부분 성공 허용)
+        for (const artistId of newArtistIds) {
+          try {
             const { error } = await artistApi.follow(Number(artistId));
             if (error) {
-              throw new Error(`Failed to follow artist ${artistId}`);
+              results.failed.push(artistId);
+            } else {
+              results.success.push(artistId);
             }
+          } catch {
+            results.failed.push(artistId);
           }
-          // 한 번에 상태 업데이트
+        }
+
+        // 성공한 아티스트만 상태 업데이트
+        if (results.success.length > 0) {
           set((state) => ({
-            followingArtists: [...new Set([...state.followingArtists, ...newArtistIds])],
-            isLoading: false
+            followingArtists: [...new Set([...state.followingArtists, ...results.success])],
+            isLoading: false,
           }));
-        } catch (err) {
-          set({ error: (err as Error).message, isLoading: false });
+        } else {
+          set({ isLoading: false });
+        }
+
+        // 일부 실패 시 경고 로그
+        if (results.failed.length > 0) {
+          console.warn(`일부 아티스트 팔로우 실패: ${results.failed.join(', ')}`);
+        }
+
+        // 모든 실패 시에만 에러 throw (호출자가 처리할 수 있도록)
+        if (results.success.length === 0 && results.failed.length > 0) {
+          throw new Error('모든 아티스트 팔로우에 실패했습니다.');
         }
       },
 

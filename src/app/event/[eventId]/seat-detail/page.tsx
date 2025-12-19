@@ -13,7 +13,26 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { MainLayout } from '@/components/layout';
 import { GradientButton } from '@/components/common';
 import { useBookingStore } from '@/stores/bookingStore';
-import { generateSeats } from '@/lib/mockData';
+import type { Seat, SeatSection } from '@/types';
+
+// Generate seats for a section (utility function)
+const generateSeatsForSection = (section: SeatSection, rows: string[], seatsPerRow: number): Seat[] => {
+  const seats: Seat[] = [];
+  rows.forEach((row) => {
+    for (let i = 1; i <= seatsPerRow; i++) {
+      const isAvailable = Math.random() > 0.3;
+      seats.push({
+        id: `${section.id}-${row}${i}`,
+        sectionId: section.id,
+        row,
+        number: i,
+        price: section.price,
+        status: isAvailable ? 'available' : 'sold',
+      });
+    }
+  });
+  return seats;
+};
 
 export default function SeatDetailPage() {
   const router = useRouter();
@@ -31,7 +50,7 @@ export default function SeatDetailPage() {
   useEffect(() => {
     if (selectedSection && seats.length === 0) {
       const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-      const generatedSeats = generateSeats(selectedSection.id, rows, 10);
+      const generatedSeats = generateSeatsForSection(selectedSection, rows, 10);
       setSeats(generatedSeats);
     }
   }, [selectedSection, seats.length, setSeats]);

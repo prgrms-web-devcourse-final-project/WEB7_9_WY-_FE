@@ -16,7 +16,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import { useNotificationStore } from '@/stores/notificationStore';
-import type { CalendarEvent } from '@/types';
+import type { KalendarEvent } from '@/types';
 import { GradientButton } from '@/components/common';
 
 interface NotificationPreference {
@@ -28,7 +28,7 @@ interface NotificationPreference {
 interface NotificationPreferenceModalProps {
   open: boolean;
   onClose: () => void;
-  event: CalendarEvent | null;
+  event: KalendarEvent | null;
 }
 
 export default function NotificationPreferenceModal({

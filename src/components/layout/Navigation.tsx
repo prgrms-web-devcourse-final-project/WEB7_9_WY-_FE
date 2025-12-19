@@ -3,14 +3,12 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { BottomNavigation, BottomNavigationAction, Paper, Box } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import PeopleIcon from '@mui/icons-material/People';
 import GroupsIcon from '@mui/icons-material/Groups';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import PersonIcon from '@mui/icons-material/Person';
 
 const navItems = [
-  { label: '캘린더', icon: <CalendarMonthIcon />, path: '/calendar' },
-  { label: '아티스트', icon: <PeopleIcon />, path: '/artists' },
+  { label: '캘린더', icon: <CalendarMonthIcon />, path: '/kalendar' },
   { label: '파티', icon: <GroupsIcon />, path: '/party' },
   { label: '채팅', icon: <ChatBubbleIcon />, path: '/chats' },
   { label: 'MY', icon: <PersonIcon />, path: '/mypage' },
@@ -20,7 +18,11 @@ export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
 
+  // /artists 경로도 캘린더 탭에 속함
   const getCurrentValue = () => {
+    if (pathname.startsWith('/artists')) {
+      return 0; // 캘린더 탭 인덱스
+    }
     const index = navItems.findIndex((item) => pathname.startsWith(item.path));
     return index >= 0 ? index : 0;
   };

@@ -24,7 +24,9 @@ import ClearIcon from '@mui/icons-material/Clear';
 import EventIcon from '@mui/icons-material/Event';
 import GroupIcon from '@mui/icons-material/Group';
 import { MainLayout } from '@/components/layout';
-import { mockArtists, mockEvents, mockParties } from '@/lib/mockData';
+import { useArtistStore } from '@/stores/artistStore';
+import { usePartyStore } from '@/stores/partyStore';
+import type { KalendarEvent } from '@/types';
 
 const recentSearches = ['BTS', 'NewJeans 콘서트', '파티 동행', 'BLACKPINK'];
 const popularSearches = ['BTS 콘서트', 'NewJeans', '크리스마스 이벤트', '연말 파티'];
@@ -33,6 +35,13 @@ export default function SearchPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [tabValue, setTabValue] = useState(0);
+
+  // Use stores instead of mock data
+  const { artists } = useArtistStore();
+  const { parties } = usePartyStore();
+
+  // TODO: Implement event search when API is available
+  const events: KalendarEvent[] = [];
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -46,20 +55,19 @@ export default function SearchPage() {
     setTabValue(newValue);
   };
 
-  // Filter results based on search query
-  const filteredArtists = mockArtists.filter((artist) =>
+  // Filter results based on search query - using store data (no mock data fallback)
+  const filteredArtists = artists.filter((artist) =>
     artist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     artist.shortName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredEvents = mockEvents.filter((event) =>
+  const filteredEvents = events.filter((event) =>
     event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     event.artistName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredParties = mockParties.filter((party) =>
-    party.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    party.eventName?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredParties = parties.filter((party) =>
+    party.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const hasResults = searchQuery && (
@@ -205,7 +213,7 @@ export default function SearchPage() {
                                 borderBottom: index < filteredEvents.length - 1 ? 1 : 0,
                                 borderColor: 'divider',
                               }}
-                              onClick={() => router.push(`/calendar`)}
+                              onClick={() => router.push(`/kalendar`)}
                             >
                               <ListItemAvatar>
                                 <Avatar sx={{ bgcolor: 'secondary.main' }}>
@@ -252,7 +260,7 @@ export default function SearchPage() {
                               </ListItemAvatar>
                               <ListItemText
                                 primary={party.title}
-                                secondary={`${party.eventName} · ${party.currentMembers}/${party.maxMembers}명`}
+                                secondary={`${party.currentMembers}/${party.maxMembers}명`}
                               />
                             </ListItem>
                           ))}

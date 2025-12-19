@@ -91,9 +91,9 @@ function NotificationItem({
 
     // Navigate based on notification type
     if (notification.partyId) {
-      router.push(`/party/${notification.partyId}`);
+      router.push('/party');
     } else if (notification.eventId) {
-      router.push(`/event/${notification.eventId}`);
+      router.push('/kalendar');
     } else if (notification.chatRoomId) {
       router.push(`/chats/${notification.chatRoomId}`);
     }

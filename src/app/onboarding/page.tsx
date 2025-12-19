@@ -25,7 +25,6 @@ import StarIcon from '@mui/icons-material/Star';
 import { useAuthStore } from '@/stores/authStore';
 import { useArtistStore } from '@/stores/artistStore';
 import { GradientButton, ArtistAvatar } from '@/components/common';
-import { mockArtists } from '@/lib/mockData';
 
 // Animations
 const float = keyframes`
@@ -117,7 +116,7 @@ export default function OnboardingPage() {
         // Guest mode - just save to local storage
         continueAsGuest(selectedArtists);
       }
-      router.push('/calendar');
+      router.push('/kalendar');
     } catch (err) {
       console.error('Failed to complete onboarding:', err);
     } finally {
@@ -234,7 +233,7 @@ export default function OnboardingPage() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     {selectedArtists.slice(0, 5).map((artistId, index) => {
-                      const artist = mockArtists.find((a) => a.id === artistId);
+                      const artist = artists.find((a) => a.id === artistId);
                       if (!artist) return null;
                       return (
                         <Zoom key={artistId} in={true} style={{ transitionDelay: `${index * 50}ms` }}>
@@ -429,7 +428,7 @@ export default function OnboardingPage() {
               gap: { xs: 1.5, sm: 2 },
             }}
           >
-            {(artists.length > 0 ? artists : mockArtists).map((artist, index) => {
+            {artists.map((artist, index) => {
               const isSelected = selectedArtists.includes(artist.id);
               const isHovered = hoveredArtist === artist.id;
 

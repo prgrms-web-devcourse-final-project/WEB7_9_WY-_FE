@@ -1,46 +1,131 @@
 import { create } from 'zustand';
 import { partyApi } from '@/api/client';
-import type { Party, PartyApplicant, PartyFilter, PartyType, PartyStatus } from '@/types';
+import type { Party, PartyApplicant, PartyFilter, PartyType, PartyStatus, RawPartyResponse } from '@/types';
 
-// API 응답 데이터를 프론트엔드 타입으로 변환
-const transformParty = (apiParty: Record<string, unknown>): Party => {
-  // partyType: 'LEAVE' | 'ARRIVE' -> type: 'departure' | 'return'
-  const typeMap: Record<string, PartyType> = {
-    'LEAVE': 'departure',
-    'ARRIVE': 'return',
+// partyType 한글 → 영문 변환
+const convertPartyType = (partyType: string): PartyType => {
+  if (partyType === '출발팟' || partyType === 'LEAVE') return 'LEAVE';
+  if (partyType === '복귀팟' || partyType === 'ARRIVE') return 'ARRIVE';
+  return 'LEAVE';
+};
+
+// 중첩 구조 API 응답인지 확인
+const isNestedStructure = (data: Record<string, unknown>): boolean => {
+  return 'partyId' in data && 'leader' in data && 'event' in data && 'partyInfo' in data;
+};
+
+
+// 내가 만든 파티 API 응답을 Party로 변환
+const transformMyCreatedParty = (raw: Record<string, unknown>): Party => {
+  const event = raw.event as { eventId: number; eventTitle: string; venueName: string; eventDateTime: string };
+  const partyInfo = raw.partyInfo as {
+    partyType: string;
+    departureLocation: string;
+    arrivalLocation: string;
+    transportType: string;
+    maxMembers: number;
+    currentMembers: number;
+    status: string;
   };
-
-  // status: 'RECRUITING' | 'CLOSED' | 'COMPLETED' | 'CANCELLED' -> status: 'recruiting' | 'confirmed' | 'closed'
-  const statusMap: Record<string, PartyStatus> = {
-    'RECRUITING': 'recruiting',
-    'CLOSED': 'closed',
-    'COMPLETED': 'closed',
-    'CANCELLED': 'closed',
-  };
-
-  // Get the raw status and map it
-  const rawStatus = (apiParty.status as string) || '';
-  const mappedStatus = statusMap[rawStatus] || statusMap[rawStatus.toUpperCase()] || 'recruiting';
-
-  // Get the raw type and map it
-  const rawType = (apiParty.partyType as string) || (apiParty.type as string) || '';
-  const mappedType = typeMap[rawType] || typeMap[rawType.toUpperCase()] || 'departure';
 
   return {
-    id: String(apiParty.id || ''),
+    id: String(raw.partyId),
+    title: (raw.description as string) || `${event.eventTitle} 파티`,
+    type: convertPartyType(partyInfo.partyType),
+    status: partyInfo.status as PartyStatus,
+    eventId: String(event.eventId),
+    eventName: event.eventTitle,
+    venueName: event.venueName,
+    eventDate: event.eventDateTime,
+    departure: partyInfo.departureLocation,
+    arrival: partyInfo.arrivalLocation,
+    transportType: partyInfo.transportType as Party['transportType'],
+    maxMembers: partyInfo.maxMembers,
+    currentMembers: partyInfo.currentMembers,
+    description: raw.description as string,
+    createdAt: raw.createdAt as string,
+    isMyParty: true, // 내가 만든 파티
+  };
+};
+
+// 내가 신청한 파티 API 응답을 Party로 변환
+const transformMyApplicationParty = (raw: Record<string, unknown>): Party => {
+  const party = raw.party as {
+    partyId: number;
+    leader: { userId: number; nickname: string; profileImage: string | null };
+    event: { eventId: number; eventTitle: string; venueName: string; eventDateTime: string };
+    partyInfo: { partyType: string; departureLocation: string; currentMembers: number; maxMembers: number };
+  };
+  const applicationStatus = raw.status as string; // PENDING, APPROVED, REJECTED
+
+  return {
+    id: String(party.partyId),
+    title: party.event.eventTitle,
+    type: convertPartyType(party.partyInfo.partyType),
+    status: applicationStatus === 'APPROVED' ? 'CLOSED' : 'RECRUITING' as PartyStatus,
+    eventId: String(party.event.eventId),
+    eventName: party.event.eventTitle,
+    venueName: party.event.venueName,
+    eventDate: party.event.eventDateTime,
+    hostId: String(party.leader.userId),
+    hostName: party.leader.nickname,
+    leaderNickname: party.leader.nickname,
+    leaderProfileImage: party.leader.profileImage || undefined,
+    departure: party.partyInfo.departureLocation,
+    arrival: '', // API에 없음
+    maxMembers: party.partyInfo.maxMembers,
+    currentMembers: party.partyInfo.currentMembers,
+    isMyParty: false, // 내가 신청한 파티
+    applicationId: raw.applicationId as number,
+    applicationStatus: applicationStatus as 'PENDING' | 'APPROVED' | 'REJECTED',
+  };
+};
+
+// 중첩 구조 API 응답을 Party로 변환
+const transformNestedParty = (raw: RawPartyResponse): Party => ({
+  id: String(raw.partyId),
+  title: raw.partyInfo.partyName,
+  type: convertPartyType(raw.partyInfo.partyType),
+  status: raw.partyInfo.status,
+  eventId: String(raw.event.eventId),
+  eventName: raw.event.eventTitle,
+  venueName: raw.event.venueName,
+  hostId: String(raw.leader.userId),
+  hostName: raw.leader.nickname,
+  leaderNickname: raw.leader.nickname,
+  leaderAge: raw.leader.age,
+  leaderGender: raw.leader.gender,
+  leaderProfileImage: raw.leader.profileImage || undefined,
+  departure: raw.partyInfo.departureLocation,
+  arrival: raw.partyInfo.arrivalLocation,
+  transportType: raw.partyInfo.transportType,
+  maxMembers: raw.partyInfo.maxMembers,
+  currentMembers: raw.partyInfo.currentMembers,
+  description: raw.partyInfo.description,
+  isMyParty: raw.isMyParty,
+  isApplied: raw.isApplied,
+});
+
+// 플랫 구조 API 응답을 Party로 변환 (레거시 지원)
+const transformFlatParty = (apiParty: Record<string, unknown>): Party => {
+  const rawType = ((apiParty.partyType as string) || (apiParty.type as string) || 'LEAVE').toUpperCase() as PartyType;
+  const rawStatus = ((apiParty.status as string) || 'RECRUITING').toUpperCase() as PartyStatus;
+
+  return {
+    id: String(apiParty.id || apiParty.partyId || ''),
     title: (apiParty.partyName as string) || (apiParty.title as string) || '',
     eventId: String(apiParty.scheduleId || apiParty.eventId || ''),
     eventName: (apiParty.eventName as string) || (apiParty.scheduleName as string) || '',
     eventDate: (apiParty.eventDate as string) || (apiParty.scheduleTime as string) || undefined,
     hostId: String(apiParty.leaderId || apiParty.hostId || ''),
     hostName: (apiParty.leaderName as string) || (apiParty.hostName as string) || undefined,
-    type: mappedType,
+    type: rawType,
     departure: (apiParty.departureLocation as string) || (apiParty.departure as string) || '',
     arrival: (apiParty.arrivalLocation as string) || (apiParty.arrival as string) || '',
     departureTime: (apiParty.departureTime as string) || undefined,
     maxMembers: (apiParty.maxMembers as number) || 4,
     currentMembers: (apiParty.currentMembers as number) || 1,
-    status: mappedStatus,
+    status: rawStatus,
     description: (apiParty.description as string) || undefined,
     createdAt: (apiParty.createdAt as string) || undefined,
     transportType: apiParty.transportType as Party['transportType'],
@@ -49,9 +134,19 @@ const transformParty = (apiParty: Record<string, unknown>): Party => {
   };
 };
 
+// API 응답 데이터를 프론트엔드 타입으로 변환 (중첩/플랫 구조 모두 지원)
+const transformParty = (apiParty: Record<string, unknown>): Party => {
+  if (isNestedStructure(apiParty)) {
+    return transformNestedParty(apiParty as unknown as RawPartyResponse);
+  }
+  return transformFlatParty(apiParty);
+};
+
 interface PartyState {
   parties: Party[];
   myParties: Party[];
+  myCreatedParties: Party[];
+  myApplicationParties: Party[];
   applicants: Record<string, PartyApplicant[]>;
   currentParty: Party | null;
   filter: PartyFilter;
@@ -114,6 +209,8 @@ type PartyStore = PartyState & PartyActions;
 export const usePartyStore = create<PartyStore>()((set, get) => ({
   parties: [],
   myParties: [],
+  myCreatedParties: [],
+  myApplicationParties: [],
   applicants: {},
   currentParty: null,
   filter: {},
@@ -341,8 +438,8 @@ export const usePartyStore = create<PartyStore>()((set, get) => ({
       if (response.data) {
         const data = response.data as { content?: Record<string, unknown>[] } | Record<string, unknown>[];
         const rawParties = Array.isArray(data) ? data : (data.content || []);
-        const myParties = rawParties.map(transformParty);
-        set({ myParties, isLoading: false });
+        const myCreatedParties = rawParties.map(transformMyCreatedParty);
+        set({ myCreatedParties, isLoading: false });
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : '내 파티 목록을 불러오는데 실패했습니다.';
@@ -360,8 +457,8 @@ export const usePartyStore = create<PartyStore>()((set, get) => ({
       if (response.data) {
         const data = response.data as { content?: Record<string, unknown>[] } | Record<string, unknown>[];
         const rawParties = Array.isArray(data) ? data : (data.content || []);
-        const myApplications = rawParties.map(transformParty);
-        set({ myParties: myApplications, isLoading: false });
+        const myApplicationParties = rawParties.map(transformMyApplicationParty);
+        set({ myApplicationParties, isLoading: false });
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : '내 신청 목록을 불러오는데 실패했습니다.';

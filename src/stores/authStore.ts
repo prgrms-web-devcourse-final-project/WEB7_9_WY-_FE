@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, SignupData, LoginData } from '@/types';
+import type { UserProfile, SignupData, LoginData } from '@/types';
 import { authApiService, userApi, setAccessToken, getAccessToken } from '@/api/client';
+import { useArtistStore } from './artistStore';
 
 interface AuthState {
-  user: User | null;
+  user: UserProfile | null;
   isLoggedIn: boolean;
   isOnboarded: boolean;
   selectedArtists: string[];
@@ -27,7 +28,7 @@ interface AuthActions {
   logout: () => Promise<void>;
   getMe: () => Promise<void>;
   // State setters (for React Query hooks)
-  setUser: (user: User | null) => void;
+  setUser: (user: UserProfile | null) => void;
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
   completeLogin: () => void;
@@ -57,6 +58,7 @@ export const useAuthStore = create<AuthStore>()(
       login: async (data: LoginData) => {
         set({ isLoading: true, error: null });
         try {
+          // Step 1: Login API call
           const { data: loginResponse, error: loginError } = await authApiService.login(data);
 
           if (loginError) {
@@ -68,10 +70,10 @@ export const useAuthStore = create<AuthStore>()(
             throw new Error('인증 토큰을 받지 못했습니다.');
           }
 
-          // Store access token
+          // Step 2: Store access token
           setAccessToken(loginResponse.accessToken);
 
-          // Fetch user info
+          // Step 3: Fetch user info
           const { data: userData, error: userError } = await userApi.getMe();
 
           if (userError) {
@@ -79,25 +81,52 @@ export const useAuthStore = create<AuthStore>()(
           }
 
           if (userData) {
-            const user: User = {
+            const user: UserProfile = {
               id: String(loginResponse.userId || ''),
               name: userData.nickname || '',
               email: userData.email || '',
               avatar: userData.profileImage,
+              nickname: userData.nickname || '',
+              profileImage: userData.profileImage,
+              gender: userData.gender as 'MALE' | 'FEMALE' | undefined,
+              age: userData.age,
+              level: userData.level,
+              emailVerified: (userData as { emailVerified?: boolean }).emailVerified,
             };
 
-            // Merge guest selections with existing selections on login
-            const { guestSelectedArtists, selectedArtists } = get();
-            const mergedArtists = [...new Set([...selectedArtists, ...guestSelectedArtists])];
+            // Step 4: Sync guest artists to server (if any)
+            const { guestSelectedArtists } = get();
+            const artistStore = useArtistStore.getState();
 
+            if (guestSelectedArtists.length > 0) {
+              try {
+                await artistStore.followMultipleArtists(guestSelectedArtists);
+              } catch (followError) {
+                console.warn('일부 아티스트 팔로우에 실패했습니다:', followError);
+                // Continue even if follow fails - best effort sync
+              }
+            }
+
+            // Step 5: Fetch following list from server
+            try {
+              await artistStore.fetchFollowing();
+            } catch (fetchError) {
+              console.warn('팔로우 목록 조회에 실패했습니다:', fetchError);
+            }
+
+            // Step 6: Determine onboarding status from server data
+            const serverFollowing = useArtistStore.getState().followingArtists;
+            const isOnboarded = serverFollowing.length > 0;
+
+            // Step 7: Update auth state
             set({
               user,
               isLoggedIn: true,
               isLoading: false,
-              selectedArtists: mergedArtists,
-              guestSelectedArtists: [],
+              selectedArtists: serverFollowing, // Use server data
+              guestSelectedArtists: [], // Clear guest selections
               isGuestMode: false,
-              isOnboarded: mergedArtists.length > 0 ? true : get().isOnboarded,
+              isOnboarded,
             });
           }
         } catch (error) {
@@ -184,11 +213,17 @@ export const useAuthStore = create<AuthStore>()(
             return;
           }
 
-          const user: User = {
+          const user: UserProfile = {
             id: String((userData as { userId?: number }).userId || userData.email || ''),
             name: userData.nickname || '',
             email: userData.email || '',
             avatar: userData.profileImage,
+            nickname: userData.nickname || '',
+            profileImage: userData.profileImage,
+            gender: userData.gender as 'MALE' | 'FEMALE' | undefined,
+            age: userData.age,
+            level: userData.level,
+            emailVerified: (userData as { emailVerified?: boolean }).emailVerified,
           };
 
           set({ user, isLoggedIn: true });
@@ -198,7 +233,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       // State setters for React Query hooks
-      setUser: (user: User | null) => {
+      setUser: (user: UserProfile | null) => {
         set({ user, isLoggedIn: !!user });
       },
 
