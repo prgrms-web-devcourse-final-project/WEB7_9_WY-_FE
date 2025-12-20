@@ -121,6 +121,7 @@ export default function PartyCard({
       sx={{
         display: 'block',
         width: '100%',
+        minWidth: 0,
         textAlign: 'left',
         borderRadius: 2,
         bgcolor: 'background.paper',
