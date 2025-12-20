@@ -23,6 +23,7 @@ import type { UpcomingEvent, EventType, ScheduleCategory } from '@/types';
 interface UpcomingEventsSidebarProps {
   upcomingEvents: UpcomingEvent[];
   selectedArtistIds: string[];
+  selectedArtistNames?: string[];
   isLoading: boolean;
 }
 
@@ -47,6 +48,7 @@ const scheduleToEventType = (category: ScheduleCategory): EventType => {
 export default function UpcomingEventsSidebar({
   upcomingEvents,
   selectedArtistIds,
+  selectedArtistNames = [],
   isLoading,
 }: UpcomingEventsSidebarProps) {
   const router = useRouter();
@@ -54,16 +56,26 @@ export default function UpcomingEventsSidebar({
 
   // Filter and process events - API data only (no mock data fallback)
   const displayEvents = useMemo(() => {
-    // Use API data - artistId로 필터링, 지난 일정 제외, 날짜순 정렬
+    // Use API data - artistId 또는 artistName으로 필터링, 지난 일정 제외, 날짜순 정렬
     return upcomingEvents
-      .filter((event) =>
-        event.daysUntilEvent >= 0 && // 지난 일정 제외
-        (selectedArtistIds.length === 0 ||
-          selectedArtistIds.includes(String(event.artistId)))
-      )
+      .filter((event) => {
+        if (event.daysUntilEvent < 0) return false; // 지난 일정 제외
+        if (selectedArtistIds.length === 0) return true; // 필터 없으면 모두 표시
+
+        // artistId가 있으면 artistId로 필터링
+        if (event.artistId !== undefined) {
+          return selectedArtistIds.includes(String(event.artistId));
+        }
+        // artistId가 없으면 artistName으로 필터링
+        if (selectedArtistNames.length > 0 && event.artistName) {
+          return selectedArtistNames.includes(event.artistName);
+        }
+        // 둘 다 없으면 표시
+        return true;
+      })
       .sort((a, b) => a.daysUntilEvent - b.daysUntilEvent) // D-Day 가까운 순
       .slice(0, 5);
-  }, [upcomingEvents, selectedArtistIds]);
+  }, [upcomingEvents, selectedArtistIds, selectedArtistNames]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -265,7 +277,7 @@ export default function UpcomingEventsSidebar({
                       variant="outlined"
                       startIcon={<GroupsIcon />}
                       onClick={() =>
-                        router.push(`/party?eventId=${event.scheduleId}`)
+                        router.push(`/party?scheduleId=${event.scheduleId}`)
                       }
                       sx={{
                         flex: 1,

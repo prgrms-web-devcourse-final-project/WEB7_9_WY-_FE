@@ -8,7 +8,6 @@ import {
   Typography,
   TextField,
   Button,
-  Link,
   Alert,
   InputAdornment,
   IconButton,
@@ -150,7 +149,7 @@ export default function LoginPage() {
                   mb: 1,
                 }}
               >
-                Fandom
+                Kalendar
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 K-POP 일정을 한눈에 관리하세요
@@ -212,7 +211,6 @@ export default function LoginPage() {
                 variant="outlined"
                 onClick={() => router.push('/signup')}
                 sx={{
-                  mb: 2,
                   py: 1.5,
                   borderRadius: 1.5,
                   borderColor: alpha(theme.palette.primary.main, 0.3),
@@ -224,15 +222,6 @@ export default function LoginPage() {
               >
                 회원가입
               </Button>
-              <Box sx={{ textAlign: 'center' }}>
-                <Link
-                  href="#"
-                  underline="hover"
-                  sx={{ fontSize: '14px', color: 'text.secondary' }}
-                >
-                  비밀번호를 잊으셨나요?
-                </Link>
-              </Box>
             </Box>
           </Box>
         </Fade>

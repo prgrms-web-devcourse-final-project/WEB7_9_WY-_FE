@@ -5,18 +5,13 @@ import { useRouter } from 'next/navigation';
 import {
   Box,
   Typography,
-  Card,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
   Avatar,
   IconButton,
   Tabs,
   Tab,
   Button,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useTheme, alpha } from '@mui/material/styles';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import EventIcon from '@mui/icons-material/Event';
 import GroupIcon from '@mui/icons-material/Group';
@@ -28,7 +23,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import ErrorIcon from '@mui/icons-material/Error';
 import { MainLayout } from '@/components/layout';
-import { LoadingSpinner } from '@/components/common';
+import { LoadingSpinner, PageHeader, Section, EmptyState } from '@/components/common';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useNotificationStore } from '@/stores/notificationStore';
 import type { NotificationType } from '@/types';
@@ -133,9 +128,9 @@ const formatTime = (notification: { time?: string; createdAt?: string }): string
 export default function NotificationsPage() {
   const { isLoading: isAuthLoading, isAllowed } = useAuthGuard();
   const router = useRouter();
+  const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
 
-  // Zustand 스토어에서 알림 상태와 액션 가져오기
   const {
     notifications,
     unreadCount,
@@ -148,7 +143,6 @@ export default function NotificationsPage() {
     setTabValue(newValue);
   };
 
-  // 탭별 필터링된 알림 목록
   const filteredNotifications = useMemo(() => {
     return notifications.filter((notification) => {
       const category = getTabCategory(notification.type);
@@ -160,14 +154,11 @@ export default function NotificationsPage() {
     });
   }, [notifications, tabValue]);
 
-  // 알림 클릭 핸들러 - 읽음 처리 및 네비게이션
   const handleNotificationClick = (notification: typeof notifications[0]) => {
-    // 읽음 처리
     if (!notification.read) {
       markAsRead(notification.id);
     }
 
-    // 관련 페이지로 이동
     if (notification.partyId) {
       router.push(`/party/${notification.partyId}`);
     } else if (notification.eventId) {
@@ -191,143 +182,142 @@ export default function NotificationsPage() {
   }
 
   return (
-    <MainLayout hideNavigation>
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            p: 2,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton onClick={() => router.back()} sx={{ mr: 1 }}>
-              <ArrowBackIcon />
-            </IconButton>
-            <Typography variant="h2">알림</Typography>
-            {unreadCount > 0 && (
-              <Typography
-                variant="caption"
+    <MainLayout>
+      <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: 'auto', width: '100%' }}>
+        {/* Page Header */}
+        <PageHeader
+          title="알림"
+          subtitle="새로운 소식을 확인하세요"
+          action={
+            unreadCount > 0 && (
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={markAllAsRead}
                 sx={{
-                  ml: 1,
-                  px: 1,
-                  py: 0.25,
-                  bgcolor: 'error.main',
-                  color: 'white',
-                  borderRadius: 10,
+                  borderColor: alpha(theme.palette.primary.main, 0.5),
+                  color: theme.palette.primary.main,
+                  '&:hover': {
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  },
                 }}
               >
-                {unreadCount}
-              </Typography>
-            )}
-          </Box>
-          {unreadCount > 0 && (
-            <Button size="small" onClick={markAllAsRead}>
-              모두 읽음
-            </Button>
-          )}
-        </Box>
+                모두 읽음
+              </Button>
+            )
+          }
+        />
 
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          variant="fullWidth"
-        >
-          <Tab label="전체" />
-          <Tab label="이벤트" />
-          <Tab label="파티" />
-          <Tab label="채팅" />
-        </Tabs>
+        {/* Filter Tabs */}
+        <Section title="필터">
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            sx={{
+              minHeight: 40,
+              '& .MuiTab-root': {
+                minHeight: 40,
+                py: 1,
+              },
+            }}
+          >
+            <Tab label="전체" />
+            <Tab label="이벤트" icon={<EventIcon sx={{ fontSize: 18 }} />} iconPosition="start" />
+            <Tab label="파티" icon={<GroupIcon sx={{ fontSize: 18 }} />} iconPosition="start" />
+            <Tab label="채팅" icon={<ChatIcon sx={{ fontSize: 18 }} />} iconPosition="start" />
+          </Tabs>
+        </Section>
 
-        <Box sx={{ p: 2 }}>
+        {/* Notifications List */}
+        <Section title={`알림 (${filteredNotifications.length})`} noBorder>
           {filteredNotifications.length === 0 ? (
+            <EmptyState
+              icon={<NotificationsIcon />}
+              title="알림이 없습니다"
+              description="새로운 알림이 오면 여기에 표시됩니다"
+            />
+          ) : (
             <Box
               sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                py: 8,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: theme.palette.divider,
+                bgcolor: theme.palette.background.paper,
+                overflow: 'hidden',
               }}
             >
-              <NotificationsIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="h4" color="text.secondary" gutterBottom>
-                알림이 없습니다
-              </Typography>
-              <Typography variant="body2" color="text.disabled">
-                새로운 알림이 오면 여기에 표시됩니다
-              </Typography>
-            </Box>
-          ) : (
-            <Card>
-              <List disablePadding>
-                {filteredNotifications.map((notification, index) => (
-                  <ListItem
-                    key={notification.id}
-                    onClick={() => handleNotificationClick(notification)}
+              {filteredNotifications.map((notification, index) => (
+                <Box
+                  key={notification.id}
+                  onClick={() => handleNotificationClick(notification)}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 2,
+                    p: 2,
+                    cursor: 'pointer',
+                    bgcolor: notification.read ? 'transparent' : alpha(theme.palette.primary.main, 0.04),
+                    borderBottom: index < filteredNotifications.length - 1 ? `1px solid ${theme.palette.divider}` : 'none',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                    },
+                  }}
+                >
+                  {/* Avatar */}
+                  <Avatar sx={{ bgcolor: getNotificationColor(notification.type), width: 44, height: 44 }}>
+                    {getNotificationIcon(notification.type)}
+                  </Avatar>
+
+                  {/* Content */}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                      <Typography
+                        variant="body1"
+                        fontWeight={notification.read ? 400 : 600}
+                        noWrap
+                      >
+                        {notification.title}
+                      </Typography>
+                      {!notification.read && (
+                        <Box
+                          sx={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            bgcolor: theme.palette.primary.main,
+                            flexShrink: 0,
+                          }}
+                        />
+                      )}
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      {notification.message}
+                    </Typography>
+                    <Typography variant="caption" color="text.disabled">
+                      {formatTime(notification)}
+                    </Typography>
+                  </Box>
+
+                  {/* Delete Button */}
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleDeleteNotification(e, notification.id)}
                     sx={{
-                      bgcolor: notification.read ? 'transparent' : 'action.hover',
-                      borderBottom: index < filteredNotifications.length - 1 ? 1 : 0,
-                      borderColor: 'divider',
-                      cursor: 'pointer',
+                      color: 'text.disabled',
                       '&:hover': {
-                        bgcolor: 'action.selected',
+                        color: theme.palette.error.main,
+                        bgcolor: alpha(theme.palette.error.main, 0.08),
                       },
                     }}
-                    secondaryAction={
-                      <IconButton
-                        edge="end"
-                        size="small"
-                        onClick={(e) => handleDeleteNotification(e, notification.id)}
-                      >
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    }
                   >
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: getNotificationColor(notification.type) }}>
-                        {getNotificationIcon(notification.type)}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography
-                            variant="body1"
-                            fontWeight={notification.read ? 400 : 600}
-                          >
-                            {notification.title}
-                          </Typography>
-                          {!notification.read && (
-                            <Box
-                              sx={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: '50%',
-                                bgcolor: 'primary.main',
-                              }}
-                            />
-                          )}
-                        </Box>
-                      }
-                      secondary={
-                        <>
-                          <Typography variant="body2" color="text.secondary">
-                            {notification.message}
-                          </Typography>
-                          <Typography variant="caption" color="text.disabled">
-                            {formatTime(notification)}
-                          </Typography>
-                        </>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Card>
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
           )}
-        </Box>
+        </Section>
       </Box>
     </MainLayout>
   );

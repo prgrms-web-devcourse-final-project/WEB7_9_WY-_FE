@@ -5,24 +5,22 @@ import { useRouter } from 'next/navigation';
 import {
   Box,
   Typography,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
   Avatar,
   Badge,
-  Divider,
 } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import GroupIcon from '@mui/icons-material/Group';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { MainLayout } from '@/components/layout';
-import { EmptyState, LoadingSpinner } from '@/components/common';
+import { EmptyState, LoadingSpinner, PageHeader, Section } from '@/components/common';
 import { useChatStore } from '@/stores/chatStore';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 export default function ChatsPage() {
   const { isLoading: isAuthLoading, isAllowed } = useAuthGuard();
   const router = useRouter();
+  const theme = useTheme();
   const { chatRooms } = useChatStore();
 
   useEffect(() => {
@@ -51,91 +49,106 @@ export default function ChatsPage() {
 
   return (
     <MainLayout>
-      <Box sx={{ p: { xs: 2, md: 3 }, pb: 0 }}>
-        <Typography variant="h2" sx={{ mb: 3 }}>
-          채팅
-        </Typography>
-      </Box>
-
-      {chatRooms.length === 0 ? (
-        <EmptyState
-          icon={<ChatBubbleIcon />}
-          title="채팅방이 없습니다"
-          description="파티에 참여하면 채팅방이 생성됩니다"
-          actionLabel="파티 찾기"
-          onAction={() => router.push('/party')}
+      <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: 'auto', width: '100%' }}>
+        {/* Page Header */}
+        <PageHeader
+          title="채팅"
+          subtitle="파티 멤버들과 대화하세요"
         />
-      ) : (
-        <List sx={{ py: 0 }}>
-          {chatRooms.map((room, index) => (
-            <Box key={room.id}>
-              <ListItem
-                component="div"
-                onClick={() => router.push(`/chats/${room.id}`)}
-                sx={{
-                  cursor: 'pointer',
-                  py: 1.5,
-                  px: 2,
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                    transform: 'translateX(4px)',
-                  },
-                  '&:active': {
-                    bgcolor: 'action.selected',
-                  },
-                }}
-              >
-                <ListItemAvatar>
+
+        {/* Chat Rooms Section */}
+        <Section title={`대화 (${chatRooms.length})`} noBorder>
+          {chatRooms.length === 0 ? (
+            <EmptyState
+              icon={<ChatBubbleIcon />}
+              title="채팅방이 없습니다"
+              description="파티에 참여하면 채팅방이 생성됩니다"
+              actionLabel="파티 찾기"
+              onAction={() => router.push('/party')}
+            />
+          ) : (
+            <Box
+              sx={{
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: theme.palette.divider,
+                bgcolor: theme.palette.background.paper,
+                overflow: 'hidden',
+              }}
+            >
+              {chatRooms.map((room, index) => (
+                <Box
+                  key={room.id}
+                  onClick={() => router.push(`/chats/${room.id}`)}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 2,
+                    cursor: 'pointer',
+                    borderBottom: index < chatRooms.length - 1 ? `1px solid ${theme.palette.divider}` : 'none',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.04),
+                    },
+                  }}
+                >
+                  {/* Avatar with Badge */}
                   <Badge
                     badgeContent={room.unreadCount}
                     color="secondary"
                     overlap="circular"
                   >
-                    <Avatar sx={{ bgcolor: 'primary.main' }}>
+                    <Avatar
+                      sx={{
+                        bgcolor: room.unreadCount ? theme.palette.primary.main : alpha(theme.palette.primary.main, 0.6),
+                        width: 48,
+                        height: 48,
+                      }}
+                    >
                       <GroupIcon />
                     </Avatar>
                   </Badge>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography component="span" variant="body1" fontWeight={room.unreadCount ? 700 : 400}>
+
+                  {/* Content */}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                      <Typography
+                        variant="body1"
+                        fontWeight={room.unreadCount ? 600 : 400}
+                        noWrap
+                        sx={{ flex: 1, mr: 1 }}
+                      >
                         {room.title}
                       </Typography>
-                      <Typography component="span" variant="caption" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
                         {room.lastMessageTime && formatTime(room.lastMessageTime)}
                       </Typography>
                     </Box>
-                  }
-                  secondary={
-                    <Box component="span" sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography
-                        component="span"
                         variant="body2"
                         color={room.unreadCount ? 'text.primary' : 'text.secondary'}
-                        sx={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          maxWidth: '70%',
-                          fontWeight: room.unreadCount ? 500 : 400,
-                        }}
+                        fontWeight={room.unreadCount ? 500 : 400}
+                        noWrap
+                        sx={{ flex: 1, mr: 1 }}
                       >
                         {room.lastMessage || '새로운 채팅방입니다'}
                       </Typography>
-                      <Typography component="span" variant="caption" color="text.disabled">
+                      <Typography variant="caption" color="text.disabled" sx={{ flexShrink: 0 }}>
                         {room.participants.length}명
                       </Typography>
                     </Box>
-                  }
-                />
-              </ListItem>
-              {index < chatRooms.length - 1 && <Divider />}
+                  </Box>
+
+                  {/* Chevron */}
+                  <ChevronRightIcon sx={{ color: 'text.disabled', flexShrink: 0 }} />
+                </Box>
+              ))}
             </Box>
-          ))}
-        </List>
-      )}
+          )}
+        </Section>
+      </Box>
     </MainLayout>
   );
 }

@@ -9,21 +9,18 @@ import {
   InputAdornment,
   IconButton,
   Chip,
-  Card,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
   Avatar,
   Tabs,
   Tab,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useTheme, alpha } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import EventIcon from '@mui/icons-material/Event';
 import GroupIcon from '@mui/icons-material/Group';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { MainLayout } from '@/components/layout';
+import { PageHeader, Section, EmptyState } from '@/components/common';
 import { useArtistStore } from '@/stores/artistStore';
 import { usePartyStore } from '@/stores/partyStore';
 import type { KalendarEvent } from '@/types';
@@ -33,10 +30,10 @@ const popularSearches = ['BTS 콘서트', 'NewJeans', '크리스마스 이벤트
 
 export default function SearchPage() {
   const router = useRouter();
+  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [tabValue, setTabValue] = useState(0);
 
-  // Use stores instead of mock data
   const { artists } = useArtistStore();
   const { parties } = usePartyStore();
 
@@ -55,7 +52,7 @@ export default function SearchPage() {
     setTabValue(newValue);
   };
 
-  // Filter results based on search query - using store data (no mock data fallback)
+  // Filter results based on search query
   const filteredArtists = artists.filter((artist) =>
     artist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     artist.shortName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -76,21 +73,55 @@ export default function SearchPage() {
 
   const noResults = searchQuery && !hasResults;
 
+  // Render a search result item
+  const renderResultItem = (
+    key: string,
+    icon: React.ReactNode,
+    primary: string,
+    secondary: string,
+    onClick: () => void,
+    isLast: boolean
+  ) => (
+    <Box
+      key={key}
+      onClick={onClick}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        p: 2,
+        cursor: 'pointer',
+        borderBottom: isLast ? 'none' : `1px solid ${theme.palette.divider}`,
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          bgcolor: alpha(theme.palette.primary.main, 0.04),
+        },
+      }}
+    >
+      {icon}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body1" fontWeight={500} noWrap>
+          {primary}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" noWrap>
+          {secondary}
+        </Typography>
+      </Box>
+      <ChevronRightIcon sx={{ color: 'text.disabled' }} />
+    </Box>
+  );
+
   return (
-    <MainLayout hideNavigation>
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-        {/* Header with Search Input */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            p: 2,
-          }}
-        >
-          <IconButton onClick={() => router.back()}>
-            <ArrowBackIcon />
-          </IconButton>
+    <MainLayout>
+      <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: 'auto', width: '100%' }}>
+        {/* Page Header */}
+        <PageHeader
+          title="검색"
+          subtitle="아티스트, 이벤트, 파티를 검색하세요"
+        />
+
+        {/* Search Input Section */}
+        <Section title="검색어 입력">
           <TextField
             fullWidth
             size="small"
@@ -98,27 +129,24 @@ export default function SearchPage() {
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon color="action" />
-                </InputAdornment>
-              ),
-              endAdornment: searchQuery && (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={clearSearch}>
-                    <ClearIcon fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 3,
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="action" />
+                  </InputAdornment>
+                ),
+                endAdornment: searchQuery && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={clearSearch}>
+                      <ClearIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ),
               },
             }}
           />
-        </Box>
+        </Section>
 
         {/* Search Results */}
         {searchQuery ? (
@@ -126,7 +154,14 @@ export default function SearchPage() {
             <Tabs
               value={tabValue}
               onChange={handleTabChange}
-              variant="fullWidth"
+              sx={{
+                mb: 3,
+                minHeight: 40,
+                '& .MuiTab-root': {
+                  minHeight: 40,
+                  py: 1,
+                },
+              }}
             >
               <Tab label={`전체 (${filteredArtists.length + filteredEvents.length + filteredParties.length})`} />
               <Tab label={`아티스트 (${filteredArtists.length})`} />
@@ -134,152 +169,105 @@ export default function SearchPage() {
               <Tab label={`파티 (${filteredParties.length})`} />
             </Tabs>
 
-            <Box sx={{ p: 2 }}>
-              {noResults ? (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    py: 8,
-                  }}
-                >
-                  <SearchIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                  <Typography variant="h4" color="text.secondary" gutterBottom>
-                    검색 결과가 없습니다
-                  </Typography>
-                  <Typography variant="body2" color="text.disabled">
-                    다른 키워드로 검색해보세요
-                  </Typography>
-                </Box>
-              ) : (
-                <>
-                  {/* Artists */}
-                  {(tabValue === 0 || tabValue === 1) && filteredArtists.length > 0 && (
-                    <Box sx={{ mb: 3 }}>
-                      {tabValue === 0 && (
-                        <Typography variant="h4" sx={{ mb: 2 }}>
-                          아티스트
-                        </Typography>
+            {noResults ? (
+              <EmptyState
+                icon={<SearchIcon />}
+                title="검색 결과가 없습니다"
+                description="다른 키워드로 검색해보세요"
+              />
+            ) : (
+              <>
+                {/* Artists */}
+                {(tabValue === 0 || tabValue === 1) && filteredArtists.length > 0 && (
+                  <Section title={`아티스트 (${filteredArtists.length})`}>
+                    <Box
+                      sx={{
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: theme.palette.divider,
+                        bgcolor: theme.palette.background.paper,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {filteredArtists.slice(0, tabValue === 0 ? 3 : undefined).map((artist, index, arr) =>
+                        renderResultItem(
+                          artist.id,
+                          <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 40, height: 40 }}>
+                            {artist.shortName.charAt(0)}
+                          </Avatar>,
+                          artist.name,
+                          `팬 ${artist.fanCount?.toLocaleString() || 0}명`,
+                          () => router.push(`/artists`),
+                          index === arr.length - 1
+                        )
                       )}
-                      <Card>
-                        <List disablePadding>
-                          {filteredArtists.slice(0, tabValue === 0 ? 3 : undefined).map((artist, index) => (
-                            <ListItem
-                              key={artist.id}
-                              component="div"
-                              sx={{
-                                cursor: 'pointer',
-                                '&:hover': { bgcolor: 'action.hover' },
-                                borderBottom: index < filteredArtists.length - 1 ? 1 : 0,
-                                borderColor: 'divider',
-                              }}
-                              onClick={() => router.push(`/artists`)}
-                            >
-                              <ListItemAvatar>
-                                <Avatar sx={{ bgcolor: 'primary.main' }}>
-                                  {artist.shortName.charAt(0)}
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary={artist.name}
-                                secondary={`팬 ${artist.fanCount?.toLocaleString() || 0}명`}
-                              />
-                            </ListItem>
-                          ))}
-                        </List>
-                      </Card>
                     </Box>
-                  )}
+                  </Section>
+                )}
 
-                  {/* Events */}
-                  {(tabValue === 0 || tabValue === 2) && filteredEvents.length > 0 && (
-                    <Box sx={{ mb: 3 }}>
-                      {tabValue === 0 && (
-                        <Typography variant="h4" sx={{ mb: 2 }}>
-                          이벤트
-                        </Typography>
+                {/* Events */}
+                {(tabValue === 0 || tabValue === 2) && filteredEvents.length > 0 && (
+                  <Section title={`이벤트 (${filteredEvents.length})`}>
+                    <Box
+                      sx={{
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: theme.palette.divider,
+                        bgcolor: theme.palette.background.paper,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {filteredEvents.slice(0, tabValue === 0 ? 3 : undefined).map((event, index, arr) =>
+                        renderResultItem(
+                          event.id,
+                          <Avatar sx={{ bgcolor: theme.palette.secondary.main, width: 40, height: 40 }}>
+                            <EventIcon />
+                          </Avatar>,
+                          event.title,
+                          `${event.date} · ${event.artistName}`,
+                          () => router.push(`/kalendar`),
+                          index === arr.length - 1
+                        )
                       )}
-                      <Card>
-                        <List disablePadding>
-                          {filteredEvents.slice(0, tabValue === 0 ? 3 : undefined).map((event, index) => (
-                            <ListItem
-                              key={event.id}
-                              component="div"
-                              sx={{
-                                cursor: 'pointer',
-                                '&:hover': { bgcolor: 'action.hover' },
-                                borderBottom: index < filteredEvents.length - 1 ? 1 : 0,
-                                borderColor: 'divider',
-                              }}
-                              onClick={() => router.push(`/kalendar`)}
-                            >
-                              <ListItemAvatar>
-                                <Avatar sx={{ bgcolor: 'secondary.main' }}>
-                                  <EventIcon />
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary={event.title}
-                                secondary={`${event.date} · ${event.artistName}`}
-                              />
-                            </ListItem>
-                          ))}
-                        </List>
-                      </Card>
                     </Box>
-                  )}
+                  </Section>
+                )}
 
-                  {/* Parties */}
-                  {(tabValue === 0 || tabValue === 3) && filteredParties.length > 0 && (
-                    <Box sx={{ mb: 3 }}>
-                      {tabValue === 0 && (
-                        <Typography variant="h4" sx={{ mb: 2 }}>
-                          파티
-                        </Typography>
+                {/* Parties */}
+                {(tabValue === 0 || tabValue === 3) && filteredParties.length > 0 && (
+                  <Section title={`파티 (${filteredParties.length})`} noBorder>
+                    <Box
+                      sx={{
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: theme.palette.divider,
+                        bgcolor: theme.palette.background.paper,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {filteredParties.slice(0, tabValue === 0 ? 3 : undefined).map((party, index, arr) =>
+                        renderResultItem(
+                          party.id,
+                          <Avatar sx={{ bgcolor: theme.palette.info.main, width: 40, height: 40 }}>
+                            <GroupIcon />
+                          </Avatar>,
+                          party.title,
+                          `${party.currentMembers}/${party.maxMembers}명`,
+                          () => router.push(`/party/${party.id}`),
+                          index === arr.length - 1
+                        )
                       )}
-                      <Card>
-                        <List disablePadding>
-                          {filteredParties.slice(0, tabValue === 0 ? 3 : undefined).map((party, index) => (
-                            <ListItem
-                              key={party.id}
-                              component="div"
-                              sx={{
-                                cursor: 'pointer',
-                                '&:hover': { bgcolor: 'action.hover' },
-                                borderBottom: index < filteredParties.length - 1 ? 1 : 0,
-                                borderColor: 'divider',
-                              }}
-                              onClick={() => router.push(`/chats/${party.id}`)}
-                            >
-                              <ListItemAvatar>
-                                <Avatar sx={{ bgcolor: 'info.main' }}>
-                                  <GroupIcon />
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary={party.title}
-                                secondary={`${party.currentMembers}/${party.maxMembers}명`}
-                              />
-                            </ListItem>
-                          ))}
-                        </List>
-                      </Card>
                     </Box>
-                  )}
-                </>
-              )}
-            </Box>
+                  </Section>
+                )}
+              </>
+            )}
           </Box>
         ) : (
           /* Default: Recent & Popular Searches */
-          <Box sx={{ p: 2 }}>
+          <>
             {/* Recent Searches */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h4" sx={{ mb: 2 }}>
-                최근 검색어
-              </Typography>
+            <Section title="최근 검색어">
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {recentSearches.map((term) => (
                   <Chip
@@ -288,49 +276,66 @@ export default function SearchPage() {
                     onClick={() => handleSearch(term)}
                     onDelete={() => {}}
                     variant="outlined"
+                    sx={{
+                      borderRadius: 1.5,
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        borderColor: theme.palette.primary.main,
+                      },
+                    }}
                   />
                 ))}
               </Box>
-            </Box>
+            </Section>
 
             {/* Popular Searches */}
-            <Box>
-              <Typography variant="h4" sx={{ mb: 2 }}>
-                인기 검색어
-              </Typography>
-              <Card>
-                <List disablePadding>
-                  {popularSearches.map((term, index) => (
-                    <ListItem
-                      key={term}
-                      component="div"
+            <Section title="인기 검색어" noBorder>
+              <Box
+                sx={{
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: theme.palette.divider,
+                  bgcolor: theme.palette.background.paper,
+                  overflow: 'hidden',
+                }}
+              >
+                {popularSearches.map((term, index) => (
+                  <Box
+                    key={term}
+                    onClick={() => handleSearch(term)}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      p: 2,
+                      cursor: 'pointer',
+                      borderBottom: index < popularSearches.length - 1 ? `1px solid ${theme.palette.divider}` : 'none',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.primary.main, 0.04),
+                      },
+                    }}
+                  >
+                    <Avatar
                       sx={{
-                        cursor: 'pointer',
-                        '&:hover': { bgcolor: 'action.hover' },
-                        borderBottom: index < popularSearches.length - 1 ? 1 : 0,
-                        borderColor: 'divider',
+                        bgcolor: index < 3 ? theme.palette.primary.main : theme.palette.grey[500],
+                        width: 32,
+                        height: 32,
+                        fontSize: 14,
+                        fontWeight: 600,
                       }}
-                      onClick={() => handleSearch(term)}
                     >
-                      <ListItemAvatar>
-                        <Avatar
-                          sx={{
-                            bgcolor: index < 3 ? 'primary.main' : 'grey.500',
-                            width: 32,
-                            height: 32,
-                            fontSize: 14,
-                          }}
-                        >
-                          {index + 1}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText primary={term} />
-                    </ListItem>
-                  ))}
-                </List>
-              </Card>
-            </Box>
-          </Box>
+                      {index + 1}
+                    </Avatar>
+                    <Typography variant="body1" fontWeight={500}>
+                      {term}
+                    </Typography>
+                    <ChevronRightIcon sx={{ ml: 'auto', color: 'text.disabled' }} />
+                  </Box>
+                ))}
+              </Box>
+            </Section>
+          </>
         )}
       </Box>
     </MainLayout>

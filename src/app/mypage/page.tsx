@@ -265,7 +265,7 @@ export default function MyPage() {
 
   return (
     <MainLayout>
-      <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: 'auto' }}>
+      <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: 'auto', width: '100%' }}>
         {/* Page Header */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" fontWeight="bold">

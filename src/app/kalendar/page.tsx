@@ -215,6 +215,13 @@ export default function KalendarPage() {
     effectiveSelectedArtists.includes(a.id)
   );
 
+  // 필터링된 아티스트 이름 목록 (upcomingEvents 필터링용)
+  const filterArtistNames = useMemo(() => {
+    return displayArtists
+      .filter((a) => filterArtists.includes(a.id))
+      .map((a) => a.name);
+  }, [displayArtists, filterArtists]);
+
   // Helper function to get event type color from theme
   const getEventTypeColor = (eventType: EventType) => {
     return theme.palette.event[eventType];
@@ -222,7 +229,7 @@ export default function KalendarPage() {
 
   // Kalendar content component
   const KalendarContent = () => (
-    <Box sx={{ p: { xs: 0, sm: 2, md: 3 }, flex: 1, bgcolor: 'background.paper' }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, flex: 1, bgcolor: 'background.paper' }}>
       {/* Loading State */}
       {isLoading && (
         <Box
@@ -251,24 +258,21 @@ export default function KalendarPage() {
       )}
 
       {/* Header Section */}
-      <Box sx={{ mb: { xs: 1.5, sm: 2, md: 3 }, px: { xs: 1, sm: 0 } }}>
+      <Box sx={{ mb: { xs: 2, md: 3 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
-            <CalendarTodayIcon sx={{ fontSize: { xs: 24, sm: 28 }, color: 'primary.main' }} />
-            <Typography
-              variant="h2"
-              color="text.primary"
-              fontWeight={700}
-              sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' } }}
-            >
-              일정 한 눈에 보기
+          <Box>
+            <Typography variant="h4" fontWeight="bold" color="text.primary">
+              캘린더
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              팔로우한 아티스트의 일정을 확인하세요
             </Typography>
           </Box>
           {/* 내 아티스트 관리 버튼 */}
           <Button
-            variant="text"
+            variant="outlined"
             size="small"
-            startIcon={<PeopleIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+            startIcon={<PeopleIcon sx={{ fontSize: 18 }} />}
             onClick={() => {
               if (!isLoggedIn) {
                 router.push('/login?redirect=/artists');
@@ -277,10 +281,10 @@ export default function KalendarPage() {
               }
             }}
             sx={{
-              color: 'text.secondary',
-              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              borderColor: alpha(theme.palette.primary.main, 0.5),
+              color: theme.palette.primary.main,
+              fontSize: '0.875rem',
               '&:hover': {
-                color: 'primary.main',
                 bgcolor: alpha(theme.palette.primary.main, 0.08),
               },
             }}
@@ -288,13 +292,6 @@ export default function KalendarPage() {
             아티스트 관리
           </Button>
         </Box>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ ml: { xs: 4, sm: 5.5 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-        >
-          팔로우한 아티스트의 일정을 확인하세요
-        </Typography>
       </Box>
 
       {/* Artist Filter */}
@@ -302,11 +299,10 @@ export default function KalendarPage() {
         <Box
           sx={{
             display: 'flex',
-            gap: { xs: 0.75, sm: 1.5 },
+            gap: 1.5,
             overflowX: 'auto',
-            pb: { xs: 1, sm: 2 },
-            mb: { xs: 1.5, sm: 2, md: 3 },
-            px: { xs: 1, sm: 0 },
+            pb: 2,
+            mb: { xs: 2, md: 3 },
             '&::-webkit-scrollbar': { display: 'none' },
           }}
         >
@@ -360,9 +356,8 @@ export default function KalendarPage() {
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: { xs: 0.5, sm: 1 },
-          mb: { xs: 1, sm: 2, md: 3 },
-          px: { xs: 1, sm: 0 },
+          gap: 1,
+          mb: { xs: 2, md: 3 },
         }}
       >
         <IconButton
@@ -518,7 +513,7 @@ export default function KalendarPage() {
       </Box>
 
       {/* Event Legend */}
-      <Box sx={{ display: 'flex', gap: { xs: 1.5, sm: 2 }, mt: { xs: 1, sm: 2 }, px: { xs: 1, sm: 0 }, flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
         {([
           { type: 'concert' as EventType, label: '콘서트' },
           { type: 'fansign' as EventType, label: '팬사인회' },
@@ -586,6 +581,7 @@ export default function KalendarPage() {
             <UpcomingEventsSidebar
               upcomingEvents={upcomingEvents}
               selectedArtistIds={filterArtists}
+              selectedArtistNames={filterArtistNames}
               isLoading={isLoading}
             />
           </Box>
@@ -607,6 +603,7 @@ export default function KalendarPage() {
             <UpcomingEventsSidebar
               upcomingEvents={upcomingEvents}
               selectedArtistIds={filterArtists}
+              selectedArtistNames={filterArtistNames}
               isLoading={isLoading}
             />
           </Box>
@@ -762,7 +759,7 @@ export default function KalendarPage() {
                   startIcon={<GroupsIcon />}
                   onClick={() => {
                     setSelectedEvent(null);
-                    router.push(`/party?eventId=${selectedEvent.id}`);
+                    router.push(`/party?scheduleId=${selectedEvent.id}`);
                   }}
                   sx={{
                     py: 1.25,
