@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { partyApi } from '@/api/client';
-import type { Party, PartyApplicant, PartyFilter, PartyType, PartyStatus, RawPartyResponse } from '@/types';
+import type { Party, PartyApplicant, PartyFilter, PartyType, PartyStatus, RawPartyResponse, ApplicationStatus } from '@/types';
 
 // partyType 한글 → 영문 변환
 const convertPartyType = (partyType: string): PartyType => {
@@ -142,6 +142,28 @@ const transformParty = (apiParty: Record<string, unknown>): Party => {
   return transformFlatParty(apiParty);
 };
 
+// ApplicationInfo API 응답을 PartyApplicant로 변환
+interface ApplicationInfoResponse {
+  applicationId?: number;
+  applicant?: {
+    userId?: number;
+    nickname?: string;
+    profileImage?: string;
+  };
+  status?: string;
+  appliedAt?: string;
+}
+
+const transformApplicant = (app: ApplicationInfoResponse, partyId: string): PartyApplicant => ({
+  id: String(app.applicationId || ''),
+  partyId,
+  userId: String(app.applicant?.userId || ''),
+  userName: app.applicant?.nickname || '',
+  userAvatar: app.applicant?.profileImage,
+  appliedAt: app.appliedAt || '',
+  status: (app.status || 'PENDING') as ApplicationStatus,
+});
+
 interface PartyState {
   parties: Party[];
   myParties: Party[];
@@ -278,11 +300,17 @@ export const usePartyStore = create<PartyStore>()((set, get) => ({
     try {
       const response = await partyApi.getApplicants(partyId);
       if (response.data) {
-        const applicantsData = response.data as PartyApplicant[];
+        // API 응답은 { partyId, applications, summary } 구조
+        const responseData = response.data as {
+          applications?: ApplicationInfoResponse[];
+        };
+        const applicantsData = (responseData.applications || []).map((app) =>
+          transformApplicant(app, partyId.toString())
+        );
         set((state) => ({
           applicants: {
             ...state.applicants,
-            [partyId.toString()]: applicantsData || [],
+            [partyId.toString()]: applicantsData,
           },
           isLoading: false,
         }));

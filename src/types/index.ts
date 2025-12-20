@@ -90,7 +90,7 @@ export interface MonthlySchedule {
 
 export interface UpcomingEvent {
   scheduleId: number;
-  artistId: number;
+  artistId?: number; // API 응답에 없을 수 있음
   artistName: string;
   title: string;
   scheduleCategory: ScheduleCategory;
