@@ -78,14 +78,23 @@ export default function UpcomingEventsSidebar({
   }, [upcomingEvents, selectedArtistIds, selectedArtistNames]);
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
+    // ISO 문자열 직접 파싱하여 타임존 변환 방지
+    const [datePart, timePart] = dateStr.split('T');
+    const [year, monthStr, dayStr] = datePart.split('-');
+    const month = parseInt(monthStr, 10);
+    const day = parseInt(dayStr, 10);
     const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+    // 요일 계산을 위해 로컬 시간으로 Date 생성
+    const date = new Date(parseInt(year, 10), month - 1, day);
     const dayName = dayNames[date.getDay()];
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const timeStr = hours && minutes ? ` ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}` : '';
+
+    let timeStr = '';
+    if (timePart) {
+      const [hours, minutes] = timePart.split(':');
+      if (hours && minutes && (hours !== '00' || minutes !== '00')) {
+        timeStr = ` ${hours}:${minutes}`;
+      }
+    }
     return `${month}월 ${day}일 (${dayName})${timeStr}`;
   };
 

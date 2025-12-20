@@ -62,12 +62,14 @@ const scheduleToEventType = (category: ScheduleCategory): EventType => {
 
 // Helper: Convert MonthlySchedule to KalendarEvent
 const monthlyToKalendarEvent = (schedule: MonthlySchedule): KalendarEvent => {
-  const dateTime = new Date(schedule.scheduleTime);
+  // ISO 문자열에서 직접 날짜/시간 추출 (타임존 변환 방지)
+  const [datePart, timePart] = schedule.scheduleTime.split('T');
+  const [hours, minutes] = (timePart || '00:00').split(':');
   return {
     id: String(schedule.scheduleId),
     title: schedule.title,
-    date: dateTime.toISOString().split('T')[0],
-    time: dateTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+    date: datePart,
+    time: `${hours}:${minutes}`,
     type: scheduleToEventType(schedule.scheduleCategory),
     artistId: String(schedule.artistId),
     artistName: schedule.artistName,
