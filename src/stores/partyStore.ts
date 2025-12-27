@@ -198,7 +198,7 @@ interface PartyActions {
     transportType: 'TAXI' | 'CARPOOL' | 'SUBWAY' | 'BUS' | 'WALK';
     maxMembers: number;
     preferredGender: 'MALE' | 'FEMALE' | 'ANY';
-    preferredAge: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'NONE';
+    preferredAge: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'ANY';
   }) => Promise<Party>;
   updateParty: (partyId: number, data: {
     partyName?: string;
@@ -208,7 +208,7 @@ interface PartyActions {
     transportType?: 'TAXI' | 'CARPOOL' | 'SUBWAY' | 'BUS' | 'WALK';
     maxMembers?: number;
     preferredGender?: 'MALE' | 'FEMALE' | 'ANY';
-    preferredAge?: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'NONE';
+    preferredAge?: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'ANY';
   }) => Promise<void>;
   deleteParty: (partyId: number) => Promise<void>;
   applyToParty: (partyId: number) => Promise<void>;
@@ -337,12 +337,26 @@ export const usePartyStore = create<PartyStore>()((set, get) => ({
     try {
       const response = await partyApi.create(data);
       if (response.data) {
-        const newParty = transformParty(response.data as Record<string, unknown>);
-        set((state) => ({
-          parties: [newParty, ...state.parties],
-          myParties: [newParty, ...state.myParties],
-          isLoading: false,
-        }));
+        // CreatePartyResponse는 { partyId, leaderId, status } 형태로 간단함
+        // 파티 목록에 추가하지 않고, 생성된 파티 ID만 반환
+        // 페이지에서 목록을 다시 fetch하도록 함
+        const responseData = response.data as { partyId?: number; leaderId?: number; status?: string };
+        const newParty: Party = {
+          id: String(responseData.partyId || ''),
+          title: data.partyName,
+          type: data.partyType,
+          status: 'RECRUITING', // 새로 생성된 파티는 항상 RECRUITING
+          eventId: String(data.scheduleId),
+          eventName: '',
+          departure: data.departureLocation,
+          arrival: data.arrivalLocation,
+          transportType: data.transportType,
+          maxMembers: data.maxMembers,
+          currentMembers: 1,
+          description: data.description,
+          isMyParty: true,
+        };
+        set({ isLoading: false });
         return newParty;
       }
       throw new Error('파티 생성에 실패했습니다.');
@@ -448,6 +462,8 @@ export const usePartyStore = create<PartyStore>()((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       await partyApi.cancelApplication(partyId, applicationId);
+      // 신청 취소 후 내 신청 목록 갱신
+      await get().getMyApplications();
       set({ isLoading: false });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : '신청 취소에 실패했습니다.';

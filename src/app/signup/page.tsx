@@ -15,6 +15,11 @@ import {
   FormGroup,
   Link,
   Fade,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
 } from '@mui/material';
 import { useTheme, alpha, keyframes } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -43,6 +48,12 @@ export default function SignupPage() {
   const [localError, setLocalError] = useState('');
   const [mounted, setMounted] = useState(false);
 
+  // Gender and birth date states
+  const [gender, setGender] = useState<'MALE' | 'FEMALE' | ''>('');
+  const [birthYear, setBirthYear] = useState('');
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthDay, setBirthDay] = useState('');
+
   // Terms agreement states
   const [ageAgreement, setAgeAgreement] = useState(false);
   const [termsAgreement, setTermsAgreement] = useState(false);
@@ -50,9 +61,33 @@ export default function SignupPage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // Clear any previous login errors when navigating to signup page
+    clearError();
+  }, [clearError]);
 
   const isRequiredAgreed = ageAgreement && termsAgreement;
+
+  // Generate year options (from current year - 100 to current year - 14)
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from(
+    { length: 87 },
+    (_, i) => currentYear - 14 - i
+  );
+
+  // Generate month options (1-12)
+  const monthOptions = Array.from({ length: 12 }, (_, i) => i + 1);
+
+  // Generate day options based on selected month and year
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month, 0).getDate();
+  };
+
+  const dayOptions = birthYear && birthMonth
+    ? Array.from(
+        { length: getDaysInMonth(parseInt(birthYear), parseInt(birthMonth)) },
+        (_, i) => i + 1
+      )
+    : Array.from({ length: 31 }, (_, i) => i + 1);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +96,16 @@ export default function SignupPage() {
 
     if (!isRequiredAgreed) {
       setLocalError('필수 약관에 동의해주세요.');
+      return;
+    }
+
+    if (!gender) {
+      setLocalError('성별을 선택해주세요.');
+      return;
+    }
+
+    if (!birthYear || !birthMonth || !birthDay) {
+      setLocalError('생년월일을 입력해주세요.');
       return;
     }
 
@@ -74,14 +119,17 @@ export default function SignupPage() {
       return;
     }
 
+    // Format birth date as ISO 8601
+    const birthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
+
     try {
       await signup({
         name,
         email,
         password,
         nickname: name,
-        gender: 'ANY',
-        birthDate: '2000-01-01',
+        gender,
+        birthDate,
       });
 
       // Check auth state after signup
@@ -255,7 +303,7 @@ export default function SignupPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                sx={{ mb: 3 }}
+                sx={{ mb: 2 }}
                 required
                 error={confirmPassword !== '' && password !== confirmPassword}
                 helperText={
@@ -264,6 +312,88 @@ export default function SignupPage() {
                     : ''
                 }
               />
+
+              {/* Gender Selection */}
+              <FormControl fullWidth sx={{ mb: 2 }} required>
+                <InputLabel id="gender-label">성별</InputLabel>
+                <Select
+                  labelId="gender-label"
+                  value={gender}
+                  label="성별"
+                  onChange={(e) => setGender(e.target.value as 'MALE' | 'FEMALE')}
+                >
+                  <MenuItem value="MALE">남성</MenuItem>
+                  <MenuItem value="FEMALE">여성</MenuItem>
+                </Select>
+                <FormHelperText>파티 매칭에 사용됩니다</FormHelperText>
+              </FormControl>
+
+              {/* Birth Date Selection */}
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                생년월일 *
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+                <FormControl sx={{ flex: 1.2 }} required>
+                  <InputLabel id="birth-year-label">년도</InputLabel>
+                  <Select
+                    labelId="birth-year-label"
+                    value={birthYear}
+                    label="년도"
+                    onChange={(e) => setBirthYear(e.target.value)}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: { maxHeight: 200 }
+                      }
+                    }}
+                  >
+                    {yearOptions.map((year) => (
+                      <MenuItem key={year} value={String(year)}>
+                        {year}년
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl sx={{ flex: 0.9 }} required>
+                  <InputLabel id="birth-month-label">월</InputLabel>
+                  <Select
+                    labelId="birth-month-label"
+                    value={birthMonth}
+                    label="월"
+                    onChange={(e) => setBirthMonth(e.target.value)}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: { maxHeight: 200 }
+                      }
+                    }}
+                  >
+                    {monthOptions.map((month) => (
+                      <MenuItem key={month} value={String(month)}>
+                        {month}월
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl sx={{ flex: 0.9 }} required>
+                  <InputLabel id="birth-day-label">일</InputLabel>
+                  <Select
+                    labelId="birth-day-label"
+                    value={birthDay}
+                    label="일"
+                    onChange={(e) => setBirthDay(e.target.value)}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: { maxHeight: 200 }
+                      }
+                    }}
+                  >
+                    {dayOptions.map((day) => (
+                      <MenuItem key={day} value={String(day)}>
+                        {day}일
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
 
               {/* Terms Agreement Section */}
               <Box

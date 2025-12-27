@@ -84,7 +84,9 @@ export function useFollowArtist() {
       }
     },
     onSuccess: () => {
+      // 팔로잉 목록과 아티스트 목록 모두 갱신
       queryClient.invalidateQueries({ queryKey: artistKeys.following() });
+      queryClient.invalidateQueries({ queryKey: artistKeys.list() });
     },
   });
 }
@@ -102,7 +104,9 @@ export function useUnfollowArtist() {
       }
     },
     onSuccess: () => {
+      // 팔로잉 목록과 아티스트 목록 모두 갱신
       queryClient.invalidateQueries({ queryKey: artistKeys.following() });
+      queryClient.invalidateQueries({ queryKey: artistKeys.list() });
     },
   });
 }

@@ -8,6 +8,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { theme } from '@/lib/theme';
 import { ThemeModeProvider } from './ThemeModeProvider';
 import { queryClient } from '@/lib/queryClient';
+import { NotificationSSEProvider } from '@/components/notification/NotificationSSEProvider';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -20,7 +21,9 @@ export default function Providers({ children }: ProvidersProps) {
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <ThemeModeProvider>
-            {children}
+            <NotificationSSEProvider>
+              {children}
+            </NotificationSSEProvider>
           </ThemeModeProvider>
         </ThemeProvider>
       </AppRouterCacheProvider>

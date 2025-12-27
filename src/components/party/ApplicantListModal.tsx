@@ -42,14 +42,24 @@ export default function ApplicantListModal({
     getApplicants,
     acceptApplicant,
     rejectApplicant,
-    isLoading,
   } = usePartyStore();
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [isModalLoading, setIsModalLoading] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
 
   // 모달이 열릴 때 신청자 목록 조회
   useEffect(() => {
     if (open && partyId) {
-      fetchPartyApplicants(Number(partyId));
+      setIsModalLoading(true);
+      setHasFetched(false);
+      fetchPartyApplicants(Number(partyId))
+        .finally(() => {
+          setIsModalLoading(false);
+          setHasFetched(true);
+        });
+    } else if (!open) {
+      // 모달이 닫힐 때 상태 초기화
+      setHasFetched(false);
     }
   }, [open, partyId, fetchPartyApplicants]);
 
@@ -115,14 +125,14 @@ export default function ApplicantListModal({
       </DialogTitle>
 
       <DialogContent dividers>
-        {isLoading && pendingApplicants.length === 0 ? (
+        {isModalLoading ? (
           <Box sx={{ py: 4, textAlign: 'center' }}>
             <CircularProgress size={32} />
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
               신청자 목록을 불러오는 중...
             </Typography>
           </Box>
-        ) : pendingApplicants.length === 0 ? (
+        ) : hasFetched && pendingApplicants.length === 0 ? (
           <Box sx={{ py: 4, textAlign: 'center' }}>
             <GroupIcon sx={{ fontSize: 48, color: theme.palette.text.disabled, mb: 1 }} />
             <Typography variant="body1" color="text.secondary">

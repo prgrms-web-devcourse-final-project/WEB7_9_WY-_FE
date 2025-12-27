@@ -37,6 +37,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import HistoryIcon from '@mui/icons-material/History';
 import FolderIcon from '@mui/icons-material/Folder';
 import PeopleIcon from '@mui/icons-material/People';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { MainLayout } from '@/components/layout';
 import { EmptyState, GradientButton, LoadingSpinner, PageHeader, Section } from '@/components/common';
 import { ApplicantListModal } from '@/components/party';
@@ -66,6 +67,7 @@ export default function MyPartiesPage() {
     acceptApplicant,
     rejectApplicant,
     cancelApplication,
+    deleteParty,
     isLoading,
   } = usePartyStore();
   const { user, isLoggedIn } = useAuthStore();
@@ -89,13 +91,13 @@ export default function MyPartiesPage() {
   // Tab에 따른 파티 필터링
   const filteredParties = useMemo(() => {
     switch (tabValue) {
-      case 0: // 전체
-        return allParties;
+      case 0: // 내가 만든 파티
+        return allParties.filter((p) => p.isMyParty);
       case 1: // 신청중
         return allParties.filter((p) => !p.isMyParty && p.applicationStatus === 'PENDING');
-      case 2: // 참여중 (내가 만든 파티 포함)
+      case 2: // 참여중 (내가 만든 파티 제외, 승인된 파티만)
         return allParties.filter((p) =>
-          p.isMyParty || (p.applicationStatus === 'APPROVED' && p.status !== 'COMPLETED')
+          !p.isMyParty && p.applicationStatus === 'APPROVED' && p.status !== 'COMPLETED'
         );
       case 3: // 종료
         return allParties.filter((p) => p.status === 'COMPLETED');
@@ -106,19 +108,15 @@ export default function MyPartiesPage() {
 
   // 탭별 카운트
   const tabCounts = useMemo(() => ({
-    all: allParties.length,
+    created: myCreatedParties.length,
     pending: myApplicationParties.filter((p) => p.applicationStatus === 'PENDING').length,
-    participating: allParties.filter((p) =>
-      p.isMyParty || (p.applicationStatus === 'APPROVED' && p.status !== 'COMPLETED')
+    participating: myApplicationParties.filter((p) =>
+      p.applicationStatus === 'APPROVED' && p.status !== 'COMPLETED'
     ).length,
     completed: allParties.filter((p) => p.status === 'COMPLETED').length,
-  }), [allParties, myApplicationParties]);
+  }), [allParties, myCreatedParties, myApplicationParties]);
 
   // Local state management functions - TODO: Replace with actual API calls
-  const updatePartyStatus = (partyId: string, status: 'RECRUITING' | 'CLOSED' | 'COMPLETED' | 'CANCELLED') => {
-    console.log(`Update party ${partyId} to status ${status} - not yet implemented`);
-  };
-
   const leaveParty = (partyId: string, _userId: string) => {
     console.log(`User ${_userId} left party ${partyId} - not yet implemented`);
   };
@@ -408,7 +406,7 @@ export default function MyPartiesPage() {
           <Button
             size="small"
             startIcon={<PeopleIcon />}
-            onClick={() => setApplicantModalParty(party)}
+            onClick={(e) => { e.stopPropagation(); setApplicantModalParty(party); }}
             sx={{
               flex: 1,
               color: theme.palette.info.main,
@@ -424,7 +422,7 @@ export default function MyPartiesPage() {
           <Button
             size="small"
             startIcon={<ChatIcon />}
-            onClick={() => router.push(`/chats/${party.id}`)}
+            onClick={(e) => { e.stopPropagation(); router.push(`/chats/${party.id}`); }}
             sx={{
               flex: 1,
               color: theme.palette.secondary.main,
@@ -437,37 +435,30 @@ export default function MyPartiesPage() {
           >
             채팅
           </Button>
-          {party.status === 'RECRUITING' && (
-            <Button
-              size="small"
-              onClick={() => updatePartyStatus(party.id, 'CLOSED')}
-              sx={{
-                flex: 1,
-                bgcolor: theme.palette.success.main,
-                color: theme.palette.background.default,
-                '&:hover': {
-                  bgcolor: theme.palette.success.dark,
-                },
-              }}
-            >
-              모집 마감
-            </Button>
-          )}
-          {party.status === 'CLOSED' && (
-            <Button
-              size="small"
-              onClick={() => updatePartyStatus(party.id, 'COMPLETED')}
-              sx={{
-                flex: 1,
-                color: theme.palette.text.disabled,
-                borderColor: theme.palette.divider,
-                border: '1px solid',
-                '&:hover': { bgcolor: alpha(theme.palette.common.white, 0.05) },
-              }}
-            >
-              파티 종료
-            </Button>
-          )}
+          <Button
+            size="small"
+            startIcon={<DeleteIcon />}
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (confirm('정말 파티를 삭제하시겠습니까?')) {
+                try {
+                  await deleteParty(Number(party.id));
+                  await getMyCreated();
+                } catch {
+                  // Error handled by store
+                }
+              }
+            }}
+            sx={{
+              flex: 1,
+              color: theme.palette.error.main,
+              borderColor: theme.palette.error.main,
+              border: '1px solid',
+              '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.1) },
+            }}
+          >
+            파티 삭제
+          </Button>
         </>
       );
     }
@@ -478,7 +469,7 @@ export default function MyPartiesPage() {
         <Button
           size="small"
           fullWidth
-          onClick={() => cancelApplication(Number(party.id), party.applicationId || 0)}
+          onClick={(e) => { e.stopPropagation(); cancelApplication(Number(party.id), party.applicationId || 0); }}
           sx={{
             color: theme.palette.error.main,
             borderColor: theme.palette.error.main,
@@ -498,7 +489,7 @@ export default function MyPartiesPage() {
           <Button
             size="small"
             startIcon={<ChatIcon />}
-            onClick={() => router.push(`/chats/${party.id}`)}
+            onClick={(e) => { e.stopPropagation(); router.push(`/chats/${party.id}`); }}
             sx={{
               flex: 1,
               bgcolor: theme.palette.primary.main,
@@ -513,7 +504,7 @@ export default function MyPartiesPage() {
           <Button
             size="small"
             startIcon={<ExitToAppIcon />}
-            onClick={() => leaveParty(party.id, user?.id || '')}
+            onClick={(e) => { e.stopPropagation(); leaveParty(party.id, user?.id || ''); }}
             sx={{
               flex: 1,
               color: theme.palette.error.main,
@@ -585,7 +576,11 @@ export default function MyPartiesPage() {
               },
             }}
           >
-            <Tab label={`전체 (${tabCounts.all})`} />
+            <Tab
+              label={`내가 만든 (${tabCounts.created})`}
+              icon={<StarIcon sx={{ fontSize: 16 }} />}
+              iconPosition="start"
+            />
             <Tab
               label={`신청중 (${tabCounts.pending})`}
               icon={<HourglassEmptyIcon sx={{ fontSize: 16 }} />}
@@ -607,7 +602,15 @@ export default function MyPartiesPage() {
         {/* Party List */}
         <Section title={`파티 목록 (${filteredParties.length})`} noBorder>
           {filteredParties.length === 0 ? (
-            allParties.length === 0 ? (
+            tabValue === 0 ? (
+              <EmptyState
+                icon={<FolderIcon />}
+                title="만든 파티가 없습니다"
+                description="새 파티를 만들어보세요!"
+                actionLabel="파티 만들기"
+                onAction={() => router.push('/party/create')}
+              />
+            ) : allParties.length === 0 ? (
               <EmptyState
                 icon={<FolderIcon />}
                 title="파티가 없습니다"

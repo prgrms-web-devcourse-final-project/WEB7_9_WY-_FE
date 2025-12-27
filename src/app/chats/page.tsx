@@ -7,6 +7,7 @@ import {
   Typography,
   Avatar,
   Badge,
+  CircularProgress,
 } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
@@ -16,19 +17,26 @@ import { MainLayout } from '@/components/layout';
 import { EmptyState, LoadingSpinner, PageHeader, Section } from '@/components/common';
 import { useChatStore } from '@/stores/chatStore';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useChatRooms } from '@/hooks/useChat';
 
 export default function ChatsPage() {
   const { isLoading: isAuthLoading, isAllowed } = useAuthGuard();
   const router = useRouter();
   const theme = useTheme();
-  const { chatRooms } = useChatStore();
+  const { setChatRooms } = useChatStore();
 
+  // API에서 채팅방 목록 조회
+  const { data: chatRooms = [], isLoading: isLoadingRooms, error } = useChatRooms();
+
+  // 스토어 동기화
   useEffect(() => {
-    if (!isAllowed) return;
-    // TODO: Fetch chat rooms from API when available
-  }, [isAllowed]);
+    if (chatRooms.length > 0) {
+      setChatRooms(chatRooms);
+    }
+  }, [chatRooms, setChatRooms]);
 
-  const formatTime = (timestamp: string) => {
+  const formatTime = (timestamp?: string) => {
+    if (!timestamp) return '';
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -58,7 +66,26 @@ export default function ChatsPage() {
 
         {/* Chat Rooms Section */}
         <Section title={`대화 (${chatRooms.length})`} noBorder>
-          {chatRooms.length === 0 ? (
+          {isLoadingRooms ? (
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                py: 8,
+              }}
+            >
+              <CircularProgress size={32} />
+            </Box>
+          ) : error ? (
+            <EmptyState
+              icon={<ChatBubbleIcon />}
+              title="채팅방을 불러올 수 없습니다"
+              description="잠시 후 다시 시도해주세요"
+              actionLabel="다시 시도"
+              onAction={() => window.location.reload()}
+            />
+          ) : chatRooms.length === 0 ? (
             <EmptyState
               icon={<ChatBubbleIcon />}
               title="채팅방이 없습니다"
@@ -79,7 +106,7 @@ export default function ChatsPage() {
               {chatRooms.map((room, index) => (
                 <Box
                   key={room.id}
-                  onClick={() => router.push(`/chats/${room.id}`)}
+                  onClick={() => router.push(`/chats/${room.partyId}`)}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
@@ -122,7 +149,7 @@ export default function ChatsPage() {
                         {room.title}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
-                        {room.lastMessageTime && formatTime(room.lastMessageTime)}
+                        {formatTime(room.lastMessageTime)}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -136,7 +163,7 @@ export default function ChatsPage() {
                         {room.lastMessage || '새로운 채팅방입니다'}
                       </Typography>
                       <Typography variant="caption" color="text.disabled" sx={{ flexShrink: 0 }}>
-                        {room.participants.length}명
+                        {room.participants?.length || 0}명
                       </Typography>
                     </Box>
                   </Box>

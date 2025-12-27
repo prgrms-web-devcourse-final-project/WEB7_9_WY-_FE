@@ -341,9 +341,9 @@ export const scheduleApi = {
 };
 
 export const performanceApi = {
-  // 공연 상세 정보 조회
+  // 공연 상세 정보 조회 (로그인 필요)
   getDetail: (performanceId: number) =>
-    api.GET('/api/v1/performance/{performanceId}', {
+    authApi.GET('/api/v1/performance/{performanceId}', {
       params: { path: { performanceId } }
     }),
 };
@@ -374,11 +374,11 @@ export const partyApi = {
     transportType: 'TAXI' | 'CARPOOL' | 'SUBWAY' | 'BUS' | 'WALK';
     maxMembers: number;
     preferredGender: 'MALE' | 'FEMALE' | 'ANY';
-    preferredAge: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'NONE';
+    preferredAge: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'ANY';
   }) => authApi.POST('/api/v1/party', { body }),
 
-  // 파티 수정
-  update: (partyId: number, body: {
+  // 파티 수정 - TODO: API types에 PUT 메서드가 없어서 임시로 fetch 사용
+  update: async (partyId: number, body: {
     partyName?: string;
     description?: string;
     departureLocation?: string;
@@ -386,11 +386,23 @@ export const partyApi = {
     transportType?: 'TAXI' | 'CARPOOL' | 'SUBWAY' | 'BUS' | 'WALK';
     maxMembers?: number;
     preferredGender?: 'MALE' | 'FEMALE' | 'ANY';
-    preferredAge?: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'NONE';
-  }) => authApi.PUT('/api/v1/party/{partyId}', {
-    params: { path: { partyId } },
-    body
-  }),
+    preferredAge?: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'ANY';
+  }) => {
+    const token = getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/party/${partyId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      throw new Error('파티 수정에 실패했습니다.');
+    }
+    return { data: await response.json(), error: null };
+  },
 
   // 파티 삭제
   delete: (partyId: number) =>
@@ -446,3 +458,377 @@ export const partyApi = {
       params: { query: params }
     }),
 };
+
+export const chatApi = {
+  // 내 채팅방 목록 조회
+  getRooms: () => authApi.GET('/api/v1/chat/rooms'),
+
+  // 채팅방 정보 조회
+  getRoomInfo: (partyId: number) =>
+    authApi.GET('/api/v1/chat/rooms/{partyId}', {
+      params: { path: { partyId } },
+    }),
+
+  // 채팅 히스토리 조회 (페이지네이션)
+  getMessages: (partyId: number, params?: { page?: number; size?: number }) =>
+    authApi.GET('/api/v1/chat/rooms/{partyId}/messages', {
+      params: { path: { partyId }, query: params },
+    }),
+
+  // 참여자 목록 조회
+  getParticipants: (partyId: number) =>
+    authApi.GET('/api/v1/chat/rooms/{partyId}/participants', {
+      params: { path: { partyId } },
+    }),
+};
+
+// ============================================
+// Booking API - 예매 시스템
+// ============================================
+import type {
+  QueueStatusResponse,
+  BookingSessionCreateRequest,
+  BookingSessionCreateResponse,
+} from '@/types/booking';
+
+export const bookingApi = {
+  // ─────────────────────────────────────────
+  // 대기열 (Queue)
+  // ─────────────────────────────────────────
+
+  // 대기열 진입
+  joinQueue: async (scheduleId: number, deviceId: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/queue/join/${scheduleId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Device-Id': deviceId,
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('대기열 진입에 실패했습니다.');
+    }
+
+    const data = await response.json();
+    // QSID는 응답 본문이 아닌 별도 처리될 수 있음
+    return { data, error: null };
+  },
+
+  // 대기열 상태 확인 (폴링)
+  getQueueStatus: async (scheduleId: number, qsid: string): Promise<{ data: QueueStatusResponse | null; error: Error | null }> => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/queue/status/${scheduleId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-QSID': qsid,
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      return { data: null, error: new Error('대기열 상태 확인에 실패했습니다.') };
+    }
+
+    const data: QueueStatusResponse = await response.json();
+    return { data, error: null };
+  },
+
+  // ─────────────────────────────────────────
+  // 예매 세션 (Booking Session)
+  // ─────────────────────────────────────────
+
+  // 예매 세션 생성
+  createSession: async (body: BookingSessionCreateRequest): Promise<{ data: BookingSessionCreateResponse | null; error: Error | null }> => {
+    const token = getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/booking-session/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return { data: null, error: new Error(errorData.message || '예매 세션 생성에 실패했습니다.') };
+    }
+
+    const data: BookingSessionCreateResponse = await response.json();
+    return { data, error: null };
+  },
+
+  // 예매 세션 ping (10초마다 호출)
+  pingSession: async (scheduleId: number, bookingSessionId: string): Promise<{ error: Error | null }> => {
+    const token = getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/booking-session/ping/${scheduleId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-BOOKING-SESSION-ID': bookingSessionId,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      return { error: new Error('세션 ping에 실패했습니다.') };
+    }
+
+    return { error: null };
+  },
+
+  // 예매 세션 이탈 (결제 진입 시)
+  leaveSession: async (scheduleId: number, bookingSessionId: string): Promise<{ error: Error | null }> => {
+    const token = getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/booking-session/leave/${scheduleId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-BOOKING-SESSION-ID': bookingSessionId,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      return { error: new Error('세션 이탈에 실패했습니다.') };
+    }
+
+    return { error: null };
+  },
+
+  // ─────────────────────────────────────────
+  // 예매 (Reservation)
+  // ─────────────────────────────────────────
+
+  // 예매 생성 - BE: Body 없음
+  createReservation: async (scheduleId: number, bookingSessionId: string) => {
+    const token = getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/booking/schedule/${scheduleId}/reservation`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-BOOKING-SESSION-ID': bookingSessionId,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return { data: null, error: new Error(errorData.message || '예매 생성에 실패했습니다.') };
+    }
+
+    const data = await response.json();
+    return { data, error: null };
+  },
+
+  // 좌석 조회
+  getSeats: async (scheduleId: number, bookingSessionId: string) => {
+    const token = getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/performance-seats/schedules/${scheduleId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-BOOKING-SESSION-ID': bookingSessionId,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('좌석 정보 조회에 실패했습니다.');
+    }
+
+    const data = await response.json();
+    return { data, error: null };
+  },
+
+  // 좌석 선점 (HOLD)
+  holdSeats: async (reservationId: number, bookingSessionId: string, body: { performanceSeatIds: number[] }) => {
+    const token = getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/booking/reservation/${reservationId}/seats:hold`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-BOOKING-SESSION-ID': bookingSessionId,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+
+    if (response.status === 409) {
+      // 좌석 충돌
+      const conflictData = await response.json();
+      return { data: null, error: new Error('SEAT_CONFLICT'), conflictData };
+    }
+
+    if (!response.ok) {
+      throw new Error('좌석 선점에 실패했습니다.');
+    }
+
+    const data = await response.json();
+    return { data, error: null };
+  },
+
+  // 좌석 선점 해제
+  releaseSeats: async (reservationId: number, bookingSessionId: string, body: { performanceSeatIds: number[] }) => {
+    const token = getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/booking/reservation/${reservationId}/seats:release`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-BOOKING-SESSION-ID': bookingSessionId,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error('좌석 해제에 실패했습니다.');
+    }
+
+    const data = await response.json();
+    return { data, error: null };
+  },
+
+  // 배송 정보 저장
+  // BE 스펙: recipient에는 name, phone, address, zipCode만 포함 (email, addressDetail 제외)
+  updateDelivery: (reservationId: number, body: { deliveryMethod: 'DELIVERY' | 'PICKUP'; recipient: { name: string; phone: string; address?: string; zipCode?: string } }) =>
+    authApi.PUT('/api/v1/booking/reservation/{reservationId}/delivery', {
+      params: { path: { reservationId } },
+      body,
+    }),
+
+  // 예매 요약 조회
+  getSummary: (reservationId: number) =>
+    authApi.GET('/api/v1/booking/reservation/{reservationId}/summary', {
+      params: { path: { reservationId } },
+    }),
+};
+
+// ============================================
+// Notification API - 알림 시스템
+// ============================================
+import type { NotificationPageResponse } from '@/types';
+
+// 인증된 fetch 요청 헬퍼 (토큰 갱신 지원)
+// OpenAPI 스펙에 정의되지 않은 엔드포인트용
+async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const token = getAccessToken();
+  const headers = new Headers(options.headers);
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  headers.set('Content-Type', 'application/json');
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[AuthFetch] Request:', url, 'Token:', token ? `${token.substring(0, 20)}...` : 'NULL');
+  }
+
+  let response = await fetch(url, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[AuthFetch] Response status:', response.status);
+  }
+
+  // 401 에러 시 토큰 갱신 시도
+  if (response.status === 401 && !url.includes('/auth/refresh')) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[AuthFetch] 401 received, attempting token refresh...');
+    }
+
+    const refreshed = await refreshAccessToken();
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[AuthFetch] Token refresh result:', refreshed);
+    }
+
+    if (refreshed) {
+      const newToken = getAccessToken();
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[AuthFetch] New token after refresh:', newToken ? `${newToken.substring(0, 20)}...` : 'NULL');
+      }
+
+      if (newToken) {
+        // 새 헤더 객체 생성 (기존 헤더 재사용하지 않음)
+        const retryHeaders = new Headers(options.headers);
+        retryHeaders.set('Authorization', `Bearer ${newToken}`);
+        retryHeaders.set('Content-Type', 'application/json');
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[AuthFetch] Retrying request with new token...');
+        }
+
+        response = await fetch(url, {
+          ...options,
+          headers: retryHeaders,
+          credentials: 'include',
+        });
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[AuthFetch] Retry response status:', response.status);
+        }
+      }
+    }
+  }
+
+  return response;
+}
+
+export const notificationApi = {
+  // 알림 목록 조회 (페이지네이션) - authApi 사용으로 토큰 갱신 미들웨어 적용
+  getNotifications: async (params?: { page?: number; size?: number }): Promise<{
+    data: NotificationPageResponse | null;
+    error: Error | null;
+  }> => {
+    try {
+      // @ts-expect-error - OpenAPI 스펙에 정의되지 않은 엔드포인트
+      const { data, error, response } = await authApi.GET('/api/v1/notifications', {
+        params: { query: params },
+      });
+
+      if (error || !response?.ok) {
+        return { data: null, error: new Error('알림 목록 조회에 실패했습니다.') };
+      }
+
+      return { data: data as unknown as NotificationPageResponse, error: null };
+    } catch (error) {
+      return { data: null, error: error instanceof Error ? error : new Error('알림 목록 조회 중 오류가 발생했습니다.') };
+    }
+  },
+
+  // 전체 읽음 처리 - authApi 사용으로 토큰 갱신 미들웨어 적용
+  markAllAsRead: async (): Promise<{ error: Error | null }> => {
+    try {
+      // @ts-expect-error - OpenAPI 스펙에 정의되지 않은 엔드포인트
+      const { error, response } = await authApi.PATCH('/api/v1/notifications/read-all', {});
+
+      if (error || !response?.ok) {
+        return { error: new Error('전체 읽음 처리에 실패했습니다.') };
+      }
+
+      return { error: null };
+    } catch (error) {
+      return { error: error instanceof Error ? error : new Error('전체 읽음 처리 중 오류가 발생했습니다.') };
+    }
+  },
+
+  // SSE 구독 URL 반환 (EventSource용 - 외부에서 사용)
+  getSubscribeUrl: () => `${API_BASE_URL}/api/v1/notifications/subscribe`,
+};
+
+// SSE용 API_BASE_URL 및 getAccessToken export
+export { API_BASE_URL };

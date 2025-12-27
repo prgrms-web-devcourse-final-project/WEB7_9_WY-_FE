@@ -120,7 +120,7 @@ export type PartyType = 'LEAVE' | 'ARRIVE';
 export type PartyStatus = 'RECRUITING' | 'CLOSED' | 'COMPLETED' | 'CANCELLED';
 export type ApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export type TransportType = 'TAXI' | 'CARPOOL' | 'SUBWAY' | 'BUS' | 'WALK';
-export type PreferredAge = 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'NONE';
+export type PreferredAge = 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'ANY';
 export type Gender = 'MALE' | 'FEMALE' | 'ANY';
 export type MemberRole = 'LEADER' | 'MEMBER';
 
@@ -205,6 +205,8 @@ export interface PartyApplicant {
 }
 
 // Chat Types
+export type ChatMessageType = 'CHAT' | 'JOIN' | 'LEAVE' | 'KICK';
+
 export interface ChatRoom {
   id: string;
   partyId: string;
@@ -214,6 +216,9 @@ export interface ChatRoom {
   lastMessage?: string;
   lastMessageTime?: string;
   unreadCount?: number;
+  participantCount?: number;
+  maxParticipants?: number;
+  isActive?: boolean;
 }
 
 export interface ChatParticipant {
@@ -222,11 +227,13 @@ export interface ChatParticipant {
   avatar?: string;
   isOwner?: boolean;
   isOnline?: boolean;
+  role?: 'LEADER' | 'MEMBER';
 }
 
 export interface ChatMessage {
   id: string;
   roomId: string;
+  type?: ChatMessageType;
   senderId: string;
   senderName: string;
   senderAvatar?: string;
@@ -234,6 +241,9 @@ export interface ChatMessage {
   timestamp: string;
   isSystem?: boolean;
   isOwn?: boolean;
+  // KICK 메시지용 필드
+  kickedByLeaderId?: string;
+  kickedByLeaderNickname?: string;
 }
 
 // Booking Types
@@ -295,6 +305,17 @@ export interface PaymentInfo {
 }
 
 // Notification Types
+
+// Backend NotificationType Enum
+export type BackendNotificationType =
+  | 'EVENT_REMINDER'
+  | 'APPLY'
+  | 'ACCEPT'
+  | 'REJECT'
+  | 'KICK'
+  | 'SYSTEM_ALERT';
+
+// Frontend NotificationType (UI 표시용)
 export type NotificationType =
   | 'schedule'
   | 'party_request'
@@ -308,6 +329,30 @@ export type NotificationType =
   | 'warning'
   | 'error';
 
+// Backend API Response Type
+export interface BackendNotificationResponse {
+  notificationId: number;
+  notificationType: BackendNotificationType;
+  title: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string; // ISO 8601
+}
+
+// Paginated Notification Response
+export interface NotificationPageResponse {
+  content: BackendNotificationResponse[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+  };
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
+
+// Frontend Notification Model
 export interface Notification {
   id: number;
   type: NotificationType;
@@ -369,3 +414,6 @@ export interface PartyFormData {
   maxMembers: number;
   description?: string;
 }
+
+// Re-export booking types
+export * from './booking';

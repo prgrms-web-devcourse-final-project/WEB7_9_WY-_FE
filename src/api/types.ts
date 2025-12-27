@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/api/v1/party/{partyId}": {
+    "/api/v1/booking/reservation/{reservationId}/delivery": {
         parameters: {
             query?: never;
             header?: never;
@@ -13,16 +13,15 @@ export interface paths {
         };
         get?: never;
         /**
-         * 파티 수정
-         * @description 파티 정보를 수정합니다. 파티장만 수정할 수 있습니다.
+         * 배송/수령 정보 저장
+         * @description 배송 방법과 수령인 정보를 저장합니다.
+         *     - DELIVERY: 배송지 정보 필수
+         *     - PICKUP: 이름, 전화번호만 필수
+         *     - 마이페이지 정보 자동 불러오기 가능
          */
-        put: operations["updateParty"];
+        put: operations["updateDeliveryInfo"];
         post?: never;
-        /**
-         * 파티 삭제
-         * @description 파티를 삭제합니다. 파티장만 삭제할 수 있습니다.
-         */
-        delete: operations["deleteParty"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -68,6 +67,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/queue/join/{scheduleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 대기열 진입
+         * @description 공연 좌석 예매를 위한 대기열에 진입합니다.
+         *     동일 deviceId는 멱등하게 처리됩니다.
+         */
+        post: operations["join"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/party": {
         parameters: {
             query?: never;
@@ -84,6 +104,16 @@ export interface paths {
         /**
          * 파티 생성
          * @description 새로운 파티를 생성합니다.
+         *
+         *     **자동 처리:**
+         *     - 파티 생성 시 채팅방 자동 생성
+         *     - 생성자가 자동으로 파티장이 됨
+         *     - 생성자가 자동으로 첫 번째 멤버로 추가됨
+         *
+         *     **생성 후:**
+         *     - 파티 상태: RECRUITING (모집 중)
+         *     - 현재 인원: 1명 (파티장)
+         *     - 채팅방 활성화: true
          */
         post: operations["createParty"];
         delete?: never;
@@ -106,6 +136,243 @@ export interface paths {
          * @description 파티에 참가 신청을 합니다.
          */
         post: operations["applyToParty"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/docs/chat/ws/send/{partyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 채팅 메시지 전송
+         * @description ⚠️ **이 API는 문서용입니다. 실제로는 WebSocket을 사용해야 합니다.**
+         *
+         *     ---
+         *
+         *     ### WebSocket 정보
+         *     - **SEND**: `/app/chat.send/{partyId}`
+         *     - **SUBSCRIBE**: `/topic/room/{partyId}`
+         *     - **Request Body**: `{"message": "메시지 내용"}`
+         *
+         *     ### 동작 흐름
+         *     1. `/app/chat.send/{partyId}`로 메시지 전송
+         *     2. 서버에서 DB 저장
+         *     3. 모든 참여자에게 브로드캐스트
+         *
+         *     ### 제한사항
+         *     - 메시지 최대 500자
+         *     - 빈 메시지 불가
+         *
+         *     ---
+         *
+         *     **권한**: 파티 멤버만 가능
+         */
+        post: operations["sendMessageDoc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/docs/chat/ws/leave/{partyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 채팅방 나가기
+         * @description **이 API는 문서용입니다. 실제로는 WebSocket을 사용해야 합니다.**
+         *
+         *     ---
+         *
+         *     ### WebSocket 정보
+         *     - **SEND**: `/app/chat.leave/{partyId}`
+         *     - **SUBSCRIBE**: `/topic/room/{partyId}`
+         *
+         *     ### 동작 흐름
+         *     1. 나가기 버튼 클릭
+         *     2. `/app/chat.leave/{partyId}` 전송
+         *     3. 퇴장 알림 브로드캐스트
+         *     4. WebSocket 연결 해제
+         *
+         *     ### 제한사항
+         *     - 파티장은 나갈 수 없음
+         *     - 나가면 다시 입장 불가 (파티 멤버에서 제외)
+         *
+         *     ---
+         *
+         *     **권한**: 파티 일반 멤버만 가능 (파티장 불가)
+         */
+        post: operations["leaveRoomDoc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/docs/chat/ws/kick/{partyId}/{targetMemberId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 멤버 강퇴 (파티장 전용)
+         * @description **이 API는 문서용입니다. 실제로는 WebSocket을 사용해야 합니다.**
+         *
+         *     ---
+         *
+         *     ### WebSocket 정보
+         *     - **SEND**: `/app/chat.kick/{partyId}/{targetMemberId}`
+         *     - **SUBSCRIBE**: `/topic/room/{partyId}`
+         *
+         *     ### 동작 흐름
+         *     1. 파티장이 강퇴 버튼 클릭
+         *     2. `/app/chat.kick/{partyId}/{targetMemberId}` 전송
+         *     3. 강퇴 알림 브로드캐스트
+         *     4. 강퇴된 사용자 자동 연결 해제
+         *
+         *     ### 제한사항
+         *     - 파티장만 사용 가능
+         *     - 파티장 자신은 강퇴 불가
+         *
+         *     ---
+         *
+         *     **권한**: 파티장만 가능
+         */
+        post: operations["kickMemberDoc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/docs/chat/ws/join/{partyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 채팅방 입장
+         * @description **이 API는 문서용입니다. 실제로는 WebSocket을 사용해야 합니다.**
+         *
+         *     ---
+         *
+         *     ### WebSocket 정보
+         *     - **SEND**: `/app/chat.join/{partyId}`
+         *     - **SUBSCRIBE**: `/topic/room/{partyId}`
+         *     - **인증**: JWT Bearer Token (CONNECT 시 Authorization 헤더)
+         *
+         *     ### 동작 흐름
+         *     1. WebSocket 연결 (`/ws-chat`)
+         *     2. `/topic/room/{partyId}` 구독
+         *     3. `/app/chat.join/{partyId}` 전송 (body 없음)
+         *     4. 입장 알림이 모든 참여자에게 브로드캐스트
+         *
+         *     ### 브로드캐스트 메시지
+         *     - type: "JOIN"
+         *     - 입장한 사용자 정보 포함
+         *     - 현재 참여자 수 포함
+         *
+         *     ---
+         *
+         *     **권한**: 파티 멤버만 가능
+         */
+        post: operations["joinRoomDoc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/booking/schedule/{scheduleId}/reservation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 예매 세션 생성
+         * @description 대기열 통과 후 예약 세션을 생성합니다.
+         *     - 대기열 토큰 검증 후 5분간 유효한 예매 세션 생성
+         *     - 생성 즉시 좌석 선택 가능 (상태 HOLD)
+         */
+        post: operations["createReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/booking/reservation/{reservationId}/seats:release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 좌석 선점 해제 (Release)
+         * @description 선택한 좌석 일부를 예매에서 제거합니다.
+         *     - 좌석 변경 시 사용
+         *     - 해제된 좌석은 즉시 다른 사용자가 선택 가능
+         *     - 총액도 자동으로 재계산
+         */
+        post: operations["releaseSeats"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/booking/reservation/{reservationId}/seats:hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 좌석 선점 (Hold)
+         * @description 선택한 좌석들을 예매 세션에 추가합니다.
+         *     **핵심 정책**
+         *     - 최대 4석까지 선택 가능
+         *     - 선택 좌석 중 하나라도 실패 시 전체 실패 (부분 성공 없음)
+         *     - Redis 분산 락으로 동시성 제어
+         *     - 첫 좌석 HOLD 성공 시점부터 TTL 카운트 시작
+         *
+         *     **충돌 처리**
+         *     - 실패 시 409 CONFLICT 반환
+         *     - 응답에 충돌 좌석 목록 + 사유 포함
+         *     - 프론트는 좌석표 재조회 필요
+         */
+        post: operations["holdSeats"];
         delete?: never;
         options?: never;
         head?: never;
@@ -296,6 +563,38 @@ export interface paths {
         patch: operations["updateMyProfile"];
         trace?: never;
     };
+    "/api/v1/party/{partyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * 파티 삭제
+         * @description 파티를 삭제합니다. 파티장만 삭제할 수 있습니다.
+         *
+         *     **자동 처리:**
+         *     - 파티 삭제 시 채팅방 자동 종료 (비활성화)
+         *     - 채팅 메시지는 보존됨 (삭제되지 않음)
+         *
+         *     **주의:**
+         *     - 파티장만 삭제 가능
+         *     - 삭제 후 복구 불가
+         */
+        delete: operations["deleteParty"];
+        options?: never;
+        head?: never;
+        /**
+         * 파티 수정
+         * @description 파티 정보를 수정합니다. 파티장만 수정할 수 있습니다.
+         */
+        patch: operations["updateParty"];
+        trace?: never;
+    };
     "/api/v1/party/{partyId}/application/{applicationId}/reject": {
         parameters: {
             query?: never;
@@ -332,6 +631,12 @@ export interface paths {
         /**
          * 파티 신청 승인
          * @description 파티 신청을 승인합니다. 파티장만 승인할 수 있습니다.
+         *
+         *     **승인 후:**
+         *     - 신청자가 파티 멤버로 추가됨
+         *     - 채팅방 입장 가능해짐
+         *     - 현재 인원 +1
+         *     - 인원이 가득 차면 파티 상태 자동 변경 (RECRUITING → CLOSED)
          */
         patch: operations["acceptApplication"];
         trace?: never;
@@ -396,6 +701,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/performance-seats/schedules/{scheduleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 좌석 조회
+         * @description 대기열을 통과한 사용자(active)만 좌석 정보를 조회할 수 있습니다.
+         *
+         *     ⚠️ 이 API는 프론트엔드에서 폴링 방식으로 자동 호출됩니다.
+         *     (사용자 직접 호출 아님)
+         */
+        get: operations["getPerformanceSeats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/party/{partyId}/members": {
         parameters: {
             query?: never;
@@ -404,8 +732,12 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 파티 확정 멤버 목록 조회
-         * @description 파티에 확정된 멤버 목록을 조회합니다.
+         * 파티 멤버 목록 조회
+         * @description 파티에 참여 중인 멤버 목록을 조회합니다.
+         *
+         *     **참고:**
+         *     - 채팅방 참여자 목록은 별도 API 사용 (GET /api/v1/chat/rooms/{partyId}/participants)
+         *     - 이 API는 파티 멤버 정보만 조회
          */
         get: operations["getPartyMembers"];
         put?: never;
@@ -444,10 +776,41 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 만든 파티 목록 조회
-         * @description 내가 만든 파티 목록을 조회합니다. 페이징 처리됩니다.
+         * 생성한 파티 목록 조회
+         * @description 내가 생성한 파티 목록을 조회합니다. 페이징 처리됩니다.
          */
         get: operations["getMyCreatedParties"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/party/user/me/party/completed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 종료된 파티 목록 조회
+         * @description 내가 관련된 모든 종료된 파티를 조회합니다.
+         *
+         *     **포함되는 파티:**
+         *     - 내가 생성한 종료된 파티 (participationType: CREATED)
+         *     - 내가 참여한 종료된 파티 (participationType: JOINED)
+         *
+         *     **정렬 기준:**
+         *     - 종료 시간 기준 최신순
+         *
+         *     **페이징:**
+         *     - 기본 20개씩 조회
+         *     - page, size 파라미터로 조절 가능
+         */
+        get: operations["getMyCompletedParties"];
         put?: never;
         post?: never;
         delete?: never;
@@ -488,6 +851,179 @@ export interface paths {
          * @description 특정 스케줄에 해당하는 파티 목록을 조회합니다. 파티 타입과 교통수단으로 필터링할 수 있습니다. 페이징 처리됩니다.
          */
         get: operations["getPartiesBySchedule"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/subscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 알림 구독 (SSE 연결)
+         * @description 서버와 SSE(Server-Sent Events) 연결을 맺습니다.
+         *
+         *     **[연결 방식]**
+         *     1. 헤더에 `Authorization: Bearer {Token}`을 포함하여 요청합니다.
+         *     2. 성공 시 `text/event-stream` 형식으로 연결이 유지됩니다.
+         *     3. 최초 연결 시 503 에러 방지를 위한 더미 데이터(`connect` 이벤트)가 발송됩니다.
+         *
+         *     **[주의사항]**
+         *     * Nginx 등 프록시 사용 시 `proxy_buffering off` 설정이 필요합니다.
+         *     * 클라이언트는 `EventSource` 또는 `event-source-polyfill`을 사용하여 연결해야 합니다.
+         */
+        get: operations["subscribeToNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chat/rooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 내 채팅방 목록 조회
+         * @description 내가 참여 중인 채팅방 목록을 조회합니다.
+         *
+         *     **표시 조건:**
+         *     - 2명 이상인 채팅방만 표시 (파티장 혼자 있는 채팅방은 제외)
+         *     - 내가 활성 멤버인 파티의 채팅방만 표시
+         *
+         *     **정렬:**
+         *     - 마지막 메시지 시간 기준 최신순
+         *
+         *     **용도:**
+         *     - 채팅 목록 페이지에서 사용
+         */
+        get: operations["getMyChatRooms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chat/rooms/{partyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 채팅방 정보 조회
+         * @description 특정 파티의 채팅방 정보를 조회합니다.
+         *
+         *     **반환 정보:**
+         *     - 파티명, 참여자 수, 최대 인원
+         *     - 채팅방 활성화 여부
+         *     - 생성 시간
+         *
+         *     **권한:** 파티 멤버만 조회 가능
+         */
+        get: operations["getChatRoomInfo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chat/rooms/{partyId}/participants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 채팅방 참여자 목록 조회
+         * @description 채팅방의 모든 참여자 정보를 조회합니다.
+         *
+         *     **정렬:** 파티장이 항상 맨 위
+         *
+         *     **권한:** 파티 멤버만 조회 가능
+         */
+        get: operations["getParticipants"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chat/rooms/{partyId}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 채팅 히스토리 조회
+         * @description 채팅방의 이전 메시지를 페이징하여 조회합니다.
+         *
+         *     **호출 시점:**
+         *     1. 채팅방 입장 시 최초 호출 (WebSocket 구독 전)
+         *     2. 스크롤 업 시 이전 메시지 로드
+         *
+         *     **메시지 타입:**
+         *     - CHAT: 일반 메시지 (message 필드 있음)
+         *     - JOIN: 입장 메시지 (message null)
+         *     - LEAVE: 퇴장 메시지 (message null)
+         *     - KICK: 강퇴 메시지 (kickedByLeaderId, kickedByLeaderNickname 포함)
+         *
+         *     **페이징:**
+         *     - 기본 50개씩 조회
+         *     - 오래된 메시지부터 정렬 (위→아래)
+         *     - hasNext: true면 더 이전 메시지 존재
+         *
+         *     **권한:** 파티 멤버만 조회 가능
+         *
+         *     **참고:** 입장 전 메시지도 모두 조회 가능 (카카오톡 오픈채팅 방식)
+         */
+        get: operations["getChatHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/booking/reservation/{reservationId}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 예매 요약 조회(step3 우측)
+         * @description 현재 예매의 전체 정보를 조회합니다.
+         *     - 공연 정보, 회차 정보
+         *     - 선택된 좌석 목록
+         *     - 총 금액, 남은 시간
+         *     - 취소 가능 기한
+         */
+        get: operations["getReservationSummary"];
         put?: never;
         post?: never;
         delete?: never;
@@ -576,6 +1112,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/booking/reservation/{reservationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * 예매 취소
+         * @description 예매 세션을 취소하고 선택한 모든 좌석을 해제합니다.
+         *     - 모든 hold된 좌석 즉시 해제
+         *     - 예매 상태 CANCELLED로 변경
+         *     - 결제 완료 후에는 취소 불가
+         */
+        delete: operations["cancelReservation"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/artist/{artistId}/unfollow": {
         parameters: {
             query?: never;
@@ -600,68 +1159,71 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @description 파티 수정 요청 */
-        UpdatePartyRequest: {
+        /** @description 수령인 정보 */
+        RecipientInfo: {
             /**
-             * @description 파티 이름
-             * @example 지민이 최애
+             * @description 수령인 이름
+             * @example 홍길동
              */
-            partyName?: string;
+            name: string;
             /**
-             * @description 파티 설명
-             * @example 같이 즐겁게 콘서트 가요!
+             * @description 연락처
+             * @example 010-1234-5678
              */
-            description?: string;
+            phone: string;
             /**
-             * @description 출발 위치
-             * @example 강남역 3번출구
+             * @description 주소 (배송 선택 시 필수)
+             * @example 서울시 강남구 테헤란로 123
              */
-            departureLocation?: string;
+            address?: string;
             /**
-             * @description 도착 위치
-             * @example 잠실종합운동장
+             * @description 우편번호 (배송 선택 시 필수)
+             * @example 12345
              */
-            arrivalLocation?: string;
-            /**
-             * @description 이동 수단
-             * @enum {string}
-             */
-            transportType?: "TAXI" | "CARPOOL" | "SUBWAY" | "BUS" | "WALK";
-            /**
-             * Format: int32
-             * @description 최대 인원
-             * @example 4
-             */
-            maxMembers?: number;
-            /**
-             * @description 선호 성별
-             * @enum {string}
-             */
-            preferredGender?: "MALE" | "FEMALE" | "ANY";
-            /**
-             * @description 선호 연령대
-             * @enum {string}
-             */
-            preferredAge?: "TEEN" | "TWENTY" | "THIRTY" | "FORTY" | "FIFTY_PLUS" | "NONE";
+            zipCode?: string;
         };
-        UpdatePartyResponse: {
+        /** @description 배송/수령 정보 저장 요청 */
+        UpdateDeliveryInfoRequest: {
+            /**
+             * @description 수령 방법
+             * @example DELIVERY
+             * @enum {string}
+             */
+            deliveryMethod: "DELIVERY" | "PICKUP";
+            /** @description 수령인 정보 */
+            recipient: components["schemas"]["RecipientInfo"];
+        };
+        /** @description 배송/수령 정보 저장 응답 */
+        UpdateDeliveryInfoResponse: {
             /**
              * Format: int64
-             * @description 파티 ID
-             * @example 1
+             * @description 예매 ID
+             * @example 123
              */
-            partyId?: number;
+            reservationId?: number;
+            /**
+             * @description 수령 방법
+             * @example DELIVERY
+             */
+            deliveryMethod?: string;
+            /**
+             * Format: date-time
+             * @description 저장 완료 시각
+             * @example 2026-01-05T14:12:00
+             */
+            updatedAt?: string;
+            /**
+             * Format: date-time
+             * @description 세션 만료 시각
+             * @example 2026-01-05T14:15:00
+             */
+            expiresAt?: string;
             /**
              * Format: int64
-             * @description 파티장 ID
-             * @example 1
+             * @description 남은 시간(초)
+             * @example 180
              */
-            leaderId?: number;
-            /**
-             * @description 상태
-             * @example 수정 완료
-             */
-            status?: string;
+            remainingSeconds?: number;
         };
         /** @description 회원가입 요청 */
         UserSignupRequest: {
@@ -687,6 +1249,11 @@ export interface components {
         UploadProfileImgResponse: {
             profileImageUrl?: string;
         };
+        QueueJoinResponse: {
+            status?: string;
+            /** Format: int64 */
+            position?: number;
+        };
         /** @description 파티 생성 요청 */
         CreatePartyRequest: {
             /**
@@ -696,7 +1263,7 @@ export interface components {
              */
             scheduleId: number;
             /**
-             * @description 파티 타입
+             * @description 파티 타입(출발팟, 복귀팟)
              * @enum {string}
              */
             partyType: "LEAVE" | "ARRIVE";
@@ -712,7 +1279,7 @@ export interface components {
             description?: string;
             /**
              * @description 출발 위치
-             * @example 강남역 3번출구
+             * @example 강남역
              */
             departureLocation: string;
             /**
@@ -740,7 +1307,7 @@ export interface components {
              * @description 선호 연령대
              * @enum {string}
              */
-            preferredAge: "TEEN" | "TWENTY" | "THIRTY" | "FORTY" | "FIFTY_PLUS" | "NONE";
+            preferredAge: "TEEN" | "TWENTY" | "THIRTY" | "FORTY" | "FIFTY_PLUS" | "ANY";
         };
         CreatePartyResponse: {
             /**
@@ -775,7 +1342,7 @@ export interface components {
             applicantAge?: number;
             /**
              * @description 신청자 성별
-             * @example 남성
+             * @example MALE
              * @enum {string}
              */
             gender?: "MALE" | "FEMALE" | "ANY";
@@ -784,6 +1351,425 @@ export interface components {
              * @example BTS 공연
              */
             partyTitle?: string;
+        };
+        /** @description 채팅 메시지 전송 요청 */
+        SendMessageRequest: {
+            /**
+             * @description 메시지 내용
+             * @example 안녕하세요! 같이 공연 가요~
+             */
+            message: string;
+        };
+        /** @description 채팅 메시지 응답 */
+        ChatMessageResponse: {
+            /**
+             * @description 메시지 타입 (CHAT, JOIN, LEAVE, KICK)
+             * @example CHAT
+             * @enum {string}
+             */
+            type?: "CHAT" | "JOIN" | "LEAVE" | "KICK";
+            /**
+             * Format: int64
+             * @description 파티 ID
+             * @example 1
+             */
+            partyId?: number;
+            /**
+             * Format: int64
+             * @description 발신자 ID
+             * @example 5
+             */
+            senderId?: number;
+            /**
+             * @description 발신자 닉네임
+             * @example 팬덤러버
+             */
+            senderNickname?: string;
+            /**
+             * @description 발신자 프로필 이미지 URL
+             * @example https://example.com/profile.jpg
+             */
+            senderProfileImage?: string;
+            /**
+             * @description 메시지 내용
+             * @example 안녕하세요!
+             */
+            message?: string;
+            /**
+             * Format: date-time
+             * @description 메시지 전송 시간
+             * @example 2024-12-16T14:30:00
+             */
+            timestamp?: string;
+        };
+        /** @description 채팅방 퇴장 응답 */
+        LeaveRoomResponse: {
+            /**
+             * @description 메시지 타입 (항상 LEAVE)
+             * @example LEAVE
+             * @enum {string}
+             */
+            type?: "CHAT" | "JOIN" | "LEAVE" | "KICK";
+            /**
+             * Format: int64
+             * @description 파티 ID
+             * @example 1
+             */
+            partyId?: number;
+            /**
+             * Format: int64
+             * @description 퇴장한 사용자 ID
+             * @example 5
+             */
+            userId?: number;
+            /**
+             * @description 퇴장한 사용자 닉네임
+             * @example 팬덤러버
+             */
+            userNickname?: string;
+            /**
+             * @description 퇴장 메시지
+             * @example 팬덤러버님이 퇴장하셨습니다
+             */
+            message?: string;
+            /**
+             * Format: date-time
+             * @description 퇴장 시간
+             * @example 2024-12-16T14:35:00
+             */
+            timestamp?: string;
+            /**
+             * Format: int32
+             * @description 현재 채팅방 참여자 수
+             * @example 3
+             */
+            participantCount?: number;
+        };
+        /** @description 멤버 강퇴 응답 */
+        KickMemberResponse: {
+            /**
+             * @description 메시지 타입 (항상 KICK)
+             * @example KICK
+             * @enum {string}
+             */
+            type?: "CHAT" | "JOIN" | "LEAVE" | "KICK";
+            /**
+             * Format: int64
+             * @description 파티 ID
+             * @example 1
+             */
+            partyId?: number;
+            /**
+             * Format: int64
+             * @description 강퇴된 멤버 ID
+             * @example 3
+             */
+            kickedMemberId?: number;
+            /**
+             * @description 강퇴된 멤버 닉네임
+             * @example 문제유저
+             */
+            kickedMemberNickname?: string;
+            /**
+             * Format: int64
+             * @description 강퇴 실행한 파티장 ID
+             * @example 1
+             */
+            kickedByLeaderId?: number;
+            /**
+             * @description 강퇴 실행한 파티장 닉네임
+             * @example 파티장님
+             */
+            kickedByLeaderNickname?: string;
+            /**
+             * @description 강퇴 메시지
+             * @example 문제유저님이 강퇴되었습니다
+             */
+            message?: string;
+            /**
+             * Format: date-time
+             * @description 강퇴 시간
+             * @example 2024-12-16T14:40:00
+             */
+            timestamp?: string;
+            /**
+             * Format: int32
+             * @description 현재 채팅방 참여자 수
+             * @example 3
+             */
+            participantCount?: number;
+        };
+        /** @description 채팅방 입장 응답 */
+        RoomJoinedResponse: {
+            /**
+             * @description 메시지 타입 (항상 JOIN)
+             * @example JOIN
+             * @enum {string}
+             */
+            type?: "CHAT" | "JOIN" | "LEAVE" | "KICK";
+            /**
+             * Format: int64
+             * @description 파티 ID
+             * @example 1
+             */
+            partyId?: number;
+            /**
+             * Format: int64
+             * @description 입장한 사용자 ID
+             * @example 5
+             */
+            userId?: number;
+            /**
+             * @description 입장한 사용자 닉네임
+             * @example 팬덤러버
+             */
+            userNickname?: string;
+            /**
+             * @description 입장한 사용자 프로필 이미지 URL
+             * @example https://example.com/profile.jpg
+             */
+            userProfileImage?: string;
+            /**
+             * @description 입장 메시지
+             * @example 팬덤러버님이 입장하셨습니다
+             */
+            message?: string;
+            /**
+             * Format: date-time
+             * @description 입장 시간
+             * @example 2024-12-16T14:30:00
+             */
+            timestamp?: string;
+            /**
+             * Format: int32
+             * @description 현재 채팅방 참여자 수
+             * @example 4
+             */
+            participantCount?: number;
+        };
+        /** @description 예약 세션 생성 요청 (대기열 통과 후) */
+        CreateReservationRequest: {
+            /**
+             * @description 대기열 통과 토큰
+             * @example wt_abc123xyz456
+             */
+            waitingToken?: string;
+            /**
+             * @description 디바이스 ID (중복 접속 방지용)
+             * @example device_xyz789
+             */
+            deviceId?: string;
+        };
+        /** @description 예매 세션 생성 응답 */
+        CreateReservationResponse: {
+            /**
+             * Format: int64
+             * @description 예매 ID
+             * @example 123
+             */
+            reservationId?: number;
+            /**
+             * @description 예매 상태
+             * @example HOLD
+             */
+            status?: string;
+            /**
+             * Format: date-time
+             * @description 세션 만료 시각
+             * @example 2026-01-05T14:15:00
+             */
+            expiresAt?: string;
+            /**
+             * Format: int64
+             * @description 남은 시간(초)
+             * @example 300
+             */
+            remainingSeconds?: number;
+        };
+        /** @description 좌석 선점 해제 요청 */
+        ReleaseSeatsRequest: {
+            /**
+             * @description 해제할 좌석 ID 목록
+             * @example [
+             *       101
+             *     ]
+             */
+            performanceSeatIds: number[];
+        };
+        /** @description 좌석 선점 해제 응답 */
+        ReleaseSeatsResponse: {
+            /**
+             * Format: int64
+             * @description 예매 ID
+             * @example 123
+             */
+            reservationId?: number;
+            /**
+             * @description 예매 상태
+             * @example HOLD
+             */
+            reservationStatus?: string;
+            /**
+             * @description 해제된 좌석 ID 목록
+             * @example [
+             *       101
+             *     ]
+             */
+            releasedSeatIds?: number[];
+            /**
+             * Format: int32
+             * @description 해제된 좌석 수
+             * @example 2
+             */
+            remainingSeatCount?: number;
+            /**
+             * Format: int32
+             * @description 총 금액(수수료 제외, 순수 티켓 금액 합)
+             * @example 150000
+             */
+            totalAmount?: number;
+            /**
+             * Format: date-time
+             * @description 세션 만료 시각
+             * @example 2026-01-05T14:15:00
+             */
+            expiresAt?: string;
+            /**
+             * Format: int64
+             * @description 남은 시간(초)
+             * @example 260
+             */
+            remainingSeconds?: number;
+        };
+        /** @description 좌석 선점 요청 */
+        HoldSeatsRequest: {
+            /**
+             * @description 선점할 좌석 ID 목록
+             * @example [
+             *       101,
+             *       102,
+             *       103
+             *     ]
+             */
+            performanceSeatIds: number[];
+        };
+        /** @description 선점된 좌석 정보 */
+        HeldSeatInfo: {
+            /**
+             * Format: int64
+             * @description 좌석 ID
+             * @example 101
+             */
+            performanceSeatId?: number;
+            /**
+             * Format: int32
+             * @description 층
+             * @example 1
+             */
+            floor?: number;
+            /**
+             * @description 구역
+             * @example A
+             */
+            block?: string;
+            /**
+             * Format: int32
+             * @description 열
+             * @example 2
+             */
+            row?: number;
+            /**
+             * Format: int32
+             * @description 번호
+             * @example 1
+             */
+            number?: number;
+            /**
+             * @description 가격 등급
+             * @example VIP
+             */
+            priceGrade?: string;
+            /**
+             * Format: int32
+             * @description 가격
+             * @example 150000
+             */
+            price?: number;
+        };
+        /** @description 좌석 선점 응답 */
+        HoldSeatsResponse: {
+            /**
+             * Format: int64
+             * @description 예매 ID
+             * @example 123
+             */
+            reservationId?: number;
+            /**
+             * @description 예매 상태
+             * @example HOLD
+             */
+            reservationStatus?: string;
+            /** @description 선점된 좌석 목록 */
+            heldSeats?: components["schemas"]["HeldSeatInfo"][];
+            /**
+             * Format: int32
+             * @description 총 금액(수수료 제외, 순수 티켓 금액 합)
+             * @example 300000
+             */
+            totalAmount?: number;
+            /**
+             * Format: date-time
+             * @description 세션 만료 시각
+             * @example 2026-01-05T14:15:00
+             */
+            expiresAt?: string;
+            /**
+             * Format: int64
+             * @description 남은 시간(초)
+             * @example 280
+             */
+            remainingSeconds?: number;
+        };
+        /** @description 충돌 좌석 정보 */
+        ConflictSeat: {
+            /**
+             * Format: int64
+             * @description 좌석 ID
+             * @example 101
+             */
+            performanceSeatId?: number;
+            /**
+             * @description 현재 상태
+             * @example HOLD
+             */
+            currentStatus?: string;
+            /**
+             * @description 실패 사유
+             * @example ALREADY_HELD
+             */
+            reason?: string;
+        };
+        /** @description 좌석 선점 실패 응답(충돌/경쟁) */
+        HoldSeatsFailResponse: {
+            /**
+             * Format: int64
+             * @description 예매 ID
+             * @example 123
+             */
+            reservationId?: number;
+            /**
+             * @description 좌석표 갱신 필요 여부
+             * @example true
+             */
+            refreshRequired?: boolean;
+            /** @description 충돌 좌석 목록 */
+            conflicts?: components["schemas"]["ConflictSeat"][];
+            /**
+             * Format: date-time
+             * @description 조회 시각
+             * @example 2026-01-05T14:10:30
+             */
+            updatedAt?: string;
         };
         /** @description 비밀번호 재설정 이메일 발송 요청 */
         UserPasswordResetSendRequest: {
@@ -923,6 +1909,69 @@ export interface components {
             age?: number;
             /** @enum {string} */
             gender?: "MALE" | "FEMALE" | "ANY";
+        };
+        /** @description 파티 수정 요청 */
+        UpdatePartyRequest: {
+            /**
+             * @description 파티 이름
+             * @example 지민이 최애
+             */
+            partyName?: string;
+            /**
+             * @description 파티 설명
+             * @example 같이 즐겁게 콘서트 가요!
+             */
+            description?: string;
+            /**
+             * @description 출발 위치
+             * @example 강남역 3번출구
+             */
+            departureLocation?: string;
+            /**
+             * @description 도착 위치
+             * @example 잠실종합운동장
+             */
+            arrivalLocation?: string;
+            /**
+             * @description 이동 수단
+             * @enum {string}
+             */
+            transportType?: "TAXI" | "CARPOOL" | "SUBWAY" | "BUS" | "WALK";
+            /**
+             * Format: int32
+             * @description 최대 인원
+             * @example 4
+             */
+            maxMembers?: number;
+            /**
+             * @description 선호 성별
+             * @enum {string}
+             */
+            preferredGender?: "MALE" | "FEMALE" | "ANY";
+            /**
+             * @description 선호 연령대
+             * @enum {string}
+             */
+            preferredAge?: "TEEN" | "TWENTY" | "THIRTY" | "FORTY" | "FIFTY_PLUS" | "ANY";
+        };
+        UpdatePartyResponse: {
+            /**
+             * Format: int64
+             * @description 파티 ID
+             * @example 1
+             */
+            partyId?: number;
+            /**
+             * Format: int64
+             * @description 파티장 ID
+             * @example 1
+             */
+            leaderId?: number;
+            /**
+             * @description 상태
+             * @example 수정 완료
+             */
+            status?: string;
         };
         RejectApplicationResponse: {
             /**
@@ -1147,6 +2196,23 @@ export interface components {
             /** Format: int32 */
             price?: number;
         };
+        PerformanceSeatResponse: {
+            /** Format: int64 */
+            performanceSeatId?: number;
+            /** Format: int32 */
+            floor?: number;
+            block?: string;
+            /** Format: int32 */
+            rowNumber?: number;
+            /** Format: int32 */
+            seatNumber?: number;
+            /** Format: int32 */
+            x?: number;
+            /** Format: int32 */
+            y?: number;
+            /** Format: int64 */
+            priceGradeId?: number;
+        };
         /** @description 이벤트 정보 */
         Event: {
             /**
@@ -1223,6 +2289,7 @@ export interface components {
         PartyInfo: {
             /**
              * @description 파티 타입
+             * @example LEAVE
              * @enum {string}
              */
             partyType?: "LEAVE" | "ARRIVE";
@@ -1230,7 +2297,7 @@ export interface components {
              * @description 파티 이름
              * @example 지민이 최애
              */
-            partyName?: string;
+            partyTitle?: string;
             /**
              * @description 출발 위치
              * @example 강남역
@@ -1386,7 +2453,7 @@ export interface components {
              * @description 신청 상태
              * @enum {string}
              */
-            status?: "PENDING" | "APPROVED" | "REJECTED";
+            status?: "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "CANCELLED";
         };
         /** @description 신청 요약 정보 */
         ApplicationSummary: {
@@ -1533,10 +2600,10 @@ export interface components {
         PartyDetailInfo: {
             /**
              * @description 파티 타입
-             * @example 출발팟
+             * @example LEAVE
              * @enum {string}
              */
-            partyType?: "출발팟" | "복귀팟";
+            partyType?: "LEAVE" | "ARRIVE";
             /**
              * @description 출발 위치
              * @example 강남역
@@ -1554,6 +2621,81 @@ export interface components {
              * @example 4
              */
             maxMembers?: number;
+        };
+        /** @description 종료된 파티 정보 */
+        CompletedPartyItem: {
+            /**
+             * Format: int64
+             * @description 파티 ID
+             * @example 1
+             */
+            partyId?: number;
+            /**
+             * @description 파티 유형
+             * @example CREATED or JOINED
+             */
+            participationType?: string;
+            /** @description 이벤트 정보 */
+            event?: components["schemas"]["EventInfo"];
+            /** @description 파티 상세 정보 */
+            partyDetail?: components["schemas"]["PartyDetailInfo"];
+            /** @description 파티장 정보 */
+            leader?: components["schemas"]["LeaderInfo"];
+            /**
+             * @description 파티 상태
+             * @example COMPLETED
+             * @enum {string}
+             */
+            status?: "RECRUITING" | "CLOSED" | "COMPLETED" | "CANCELLED";
+            /**
+             * Format: date-time
+             * @description 종료 시간
+             */
+            completedAt?: string;
+            /**
+             * Format: date-time
+             * @description 생성 시간
+             */
+            createdAt?: string;
+        };
+        /** @description 종료된 파티 목록 응답 */
+        GetCompletedPartiesResponse: {
+            /** @description 종료된 파티 목록 */
+            parties?: components["schemas"]["CompletedPartyItem"][];
+            /**
+             * Format: int32
+             * @description 전체 개수
+             */
+            totalElements?: number;
+            /**
+             * Format: int32
+             * @description 전체 페이지 수
+             */
+            totalPages?: number;
+            /**
+             * Format: int32
+             * @description 현재 페이지 번호
+             */
+            pageNumber?: number;
+        };
+        /** @description 파티장 정보 */
+        LeaderInfo: {
+            /**
+             * Format: int64
+             * @description 사용자 ID
+             * @example 100
+             */
+            userId?: number;
+            /**
+             * @description 닉네임
+             * @example 지민이 최애
+             */
+            nickname?: string;
+            /**
+             * @description 프로필 이미지 URL
+             * @example https://example.com/profile.jpg
+             */
+            profileImage?: string;
         };
         /** @description 신청 항목 */
         ApplicationItem: {
@@ -1601,6 +2743,353 @@ export interface components {
              */
             pageNumber?: number;
         };
+        SseEmitter: {
+            /** Format: int64 */
+            timeout?: number;
+        };
+        /** @description 채팅방 항목 */
+        ChatRoomItem: {
+            /**
+             * Format: int64
+             * @description 파티 ID
+             * @example 1
+             */
+            partyId?: number;
+            /**
+             * @description 파티 이름
+             * @example 지민이 최애
+             */
+            partyName?: string;
+            /**
+             * Format: int32
+             * @description 참여자 수
+             * @example 3
+             */
+            participantCount?: number;
+            /**
+             * @description 마지막 메시지
+             * @example 안녕하세요!
+             */
+            lastMessage?: string;
+            /**
+             * Format: date-time
+             * @description 마지막 메시지 시간
+             * @example 2024-12-16T14:30:00
+             */
+            lastMessageTime?: string;
+            /**
+             * Format: int32
+             * @description 읽지 않은 메시지 수
+             * @example 0
+             */
+            unreadCount?: number;
+        };
+        /** @description 내 채팅방 목록 응답 */
+        MyChatRoomsResponse: {
+            /** @description 채팅방 목록 */
+            chatRooms?: components["schemas"]["ChatRoomItem"][];
+            /**
+             * Format: int32
+             * @description 전체 개수
+             * @example 2
+             */
+            totalCount?: number;
+        };
+        /** @description 채팅방 정보 응답 */
+        ChatRoomInfoResponse: {
+            /**
+             * Format: int64
+             * @description 파티 ID
+             * @example 1
+             */
+            partyId?: number;
+            /**
+             * @description 파티 이름
+             * @example 지민이 최애
+             */
+            partyName?: string;
+            /**
+             * Format: int32
+             * @description 참여자 수
+             * @example 3
+             */
+            participantCount?: number;
+            /**
+             * Format: int32
+             * @description 최대 인원
+             * @example 5
+             */
+            maxParticipants?: number;
+            /**
+             * @description 활성화 여부
+             * @example true
+             */
+            isActive?: boolean;
+            /**
+             * Format: date-time
+             * @description 생성 시간
+             * @example 2024-12-15T10:00:00
+             */
+            createdAt?: string;
+        };
+        /** @description 참여자 정보 */
+        ParticipantInfo: {
+            /**
+             * Format: int64
+             * @description 사용자 ID
+             * @example 5
+             */
+            userId?: number;
+            /**
+             * @description 닉네임
+             * @example 팬덤러버
+             */
+            nickname?: string;
+            /**
+             * @description 프로필 이미지
+             * @example https://example.com/profile.jpg
+             */
+            profileImage?: string;
+            /**
+             * @description 파티장 여부
+             * @example false
+             */
+            isLeader?: boolean;
+            /**
+             * @description 온라인 상태
+             * @example false
+             */
+            isOnline?: boolean;
+        };
+        /** @description 채팅방 참여자 목록 응답 */
+        ParticipantListResponse: {
+            /**
+             * Format: int64
+             * @description 파티 ID
+             * @example 1
+             */
+            partyId?: number;
+            /** @description 참여자 목록 */
+            participants?: components["schemas"]["ParticipantInfo"][];
+        };
+        /** @description 채팅 히스토리 응답 */
+        ChatHistoryResponse: {
+            /**
+             * Format: int64
+             * @description 파티 ID
+             * @example 1
+             */
+            partyId?: number;
+            /** @description 메시지 목록 */
+            messages?: components["schemas"]["ChatMessageDto"][];
+            /**
+             * Format: int32
+             * @description 현재 페이지
+             * @example 0
+             */
+            currentPage?: number;
+            /**
+             * Format: int32
+             * @description 전체 페이지 수
+             * @example 5
+             */
+            totalPages?: number;
+            /**
+             * Format: int64
+             * @description 전체 메시지 수
+             * @example 245
+             */
+            totalMessages?: number;
+            /**
+             * @description 다음 페이지 존재 여부
+             * @example true
+             */
+            hasNext?: boolean;
+        };
+        /** @description 채팅 메시지 */
+        ChatMessageDto: {
+            /**
+             * Format: int64
+             * @description 메시지 ID
+             * @example 1
+             */
+            messageId?: number;
+            /**
+             * @description 메시지 타입
+             * @enum {string}
+             */
+            type?: "CHAT" | "JOIN" | "LEAVE" | "KICK";
+            /**
+             * Format: int64
+             * @description 발신자 ID
+             * @example 5
+             */
+            senderId?: number;
+            /**
+             * @description 발신자 닉네임
+             * @example 팬덤러버
+             */
+            senderNickname?: string;
+            /**
+             * @description 발신자 프로필 이미지
+             * @example https://example.com/profile.jpg
+             */
+            senderProfileImage?: string;
+            /**
+             * @description 메시지 내용
+             * @example 안녕하세요!
+             */
+            message?: string;
+            /**
+             * Format: date-time
+             * @description 전송 시간
+             * @example 2024-12-16T14:30:00
+             */
+            timestamp?: string;
+            /**
+             * Format: int64
+             * @description 강퇴한 파티장 ID (KICK 타입만)
+             * @example 1
+             */
+            kickedByLeaderId?: number;
+            /**
+             * @description 강퇴한 파티장 닉네임 (KICK 타입만)
+             * @example 파티장님
+             */
+            kickedByLeaderNickname?: string;
+        };
+        /** @description 공연 정보 */
+        PerformanceInfo: {
+            /**
+             * Format: int64
+             * @description 공연 ID
+             * @example 1
+             */
+            performanceId?: number;
+            /**
+             * @description 공연 제목
+             * @example KPOP DREAM CONCERT
+             */
+            title?: string;
+            /**
+             * @description 포스터 이미지 URL
+             * @example https://example.com/poster.jpg
+             */
+            posterImageUrl?: string;
+            /**
+             * @description 공연장명
+             * @example KPOP Arena Hall
+             */
+            performanceHallName?: string;
+        };
+        /** @description 예약 요약 정보 (Step3 화면용) */
+        ReservationSummaryResponse: {
+            /**
+             * Format: int64
+             * @description 예약 ID
+             * @example 123
+             */
+            reservationId?: number;
+            /** @description 공연 정보 */
+            performance?: components["schemas"]["PerformanceInfo"];
+            /** @description 회차 정보 */
+            schedule?: components["schemas"]["ScheduleInfo"];
+            /** @description 선택된 좌석 목록 */
+            selectedSeats?: components["schemas"]["SelectedSeatInfo"][];
+            /**
+             * Format: int32
+             * @description 총 금액
+             * @example 300000
+             */
+            totalAmount?: number;
+            /**
+             * Format: date-time
+             * @description 세션 만료 시각
+             * @example 2026-01-05T14:15:00
+             */
+            expiresAt?: string;
+            /**
+             * Format: int64
+             * @description 남은 시간(초)
+             * @example 240
+             */
+            remainingSeconds?: number;
+            /**
+             * Format: date-time
+             * @description 취소 가능 기한
+             * @example 2026-01-05T17:00:00
+             */
+            cancellationDeadline?: string;
+        };
+        /** @description 회차 정보 */
+        ScheduleInfo: {
+            /**
+             * Format: int64
+             * @description 회차 ID
+             * @example 1
+             */
+            scheduleId?: number;
+            /**
+             * Format: date
+             * @description 공연 날짜
+             * @example 2026-01-05
+             */
+            performanceDate?: string;
+            /**
+             * @description 시작 시간
+             * @example 18:00
+             */
+            startTime?: string;
+            /**
+             * Format: int32
+             * @description 회차 번호
+             * @example 1
+             */
+            performanceNo?: number;
+        };
+        /** @description 선택된 좌석 정보 */
+        SelectedSeatInfo: {
+            /**
+             * Format: int64
+             * @description 좌석 ID
+             * @example 101
+             */
+            performanceSeatId?: number;
+            /**
+             * Format: int32
+             * @description 층
+             * @example 1
+             */
+            floor?: number;
+            /**
+             * @description 구역
+             * @example A
+             */
+            block?: string;
+            /**
+             * Format: int32
+             * @description 열
+             * @example 2
+             */
+            row?: number;
+            /**
+             * Format: int32
+             * @description 번호
+             * @example 1
+             */
+            number?: number;
+            /**
+             * @description 가격 등급
+             * @example VIP
+             */
+            priceGrade?: string;
+            /**
+             * Format: int32
+             * @description 가격
+             * @example 150000
+             */
+            price?: number;
+        };
         /** @description 이메일 인증 상태 응답 */
         EmailStatusResponse: {
             /**
@@ -1644,35 +3133,29 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    updateParty: {
+    updateDeliveryInfo: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                partyId: number;
+                /** @description 예매 ID */
+                reservationId: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdatePartyRequest"];
+                "application/json": components["schemas"]["UpdateDeliveryInfoRequest"];
             };
         };
         responses: {
-            /** @description 수정 성공 */
+            /** @description 저장 성공 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example {
-                     *       "partyId": 1,
-                     *       "leaderId": 1,
-                     *       "status": "수정 완료"
-                     *     }
-                     */
-                    "application/json": components["schemas"]["UpdatePartyResponse"];
+                    "application/json": components["schemas"]["UpdateDeliveryInfoResponse"];
                 };
             };
             /** @description 잘못된 요청 */
@@ -1681,31 +3164,10 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example {
-                     *       "code": "3413",
-                     *       "message": "현재 인원보다 적게 최대 인원을 설정할 수 없습니다."
-                     *     }
-                     */
                     "application/json": unknown;
                 };
             };
-            /** @description 권한 없음 */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "code": "3104",
-                     *       "message": "파티장만 파티를 수정할 수 있습니다."
-                     *     }
-                     */
-                    "application/json": unknown;
-                };
-            };
-            /** @description 파티를 찾을 수 없음 */
+            /** @description 예매를 찾을 수 없음 */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -1713,58 +3175,11 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "code": "3001",
-                     *       "message": "파티를 찾을 수 없습니다."
-                     *     }
-                     */
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    deleteParty: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                partyId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description 삭제 성공 */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description 권한 없음 */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "code": "3105",
-                     *       "message": "파티장만 파티를 삭제할 수 있습니다."
-                     *     }
-                     */
-                    "application/json": unknown;
-                };
-            };
-            /** @description 파티를 찾을 수 없음 */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "code": "3001",
-                     *       "message": "파티를 찾을 수 없습니다."
+                     *       "error": {
+                     *         "code": "RESERVATION_NOT_FOUND",
+                     *         "status": "404",
+                     *         "message": "예매를 찾을 수 없습니다."
+                     *       }
                      *     }
                      */
                     "application/json": unknown;
@@ -1809,15 +3224,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example {
-                     *       "error": {
-                     *         "code": "DUPLICATE_NICKNAME",
-                     *         "status": "409",
-                     *         "message": "이미 사용 중인 닉네임입니다."
-                     *       }
-                     *     }
-                     */
                     "application/json": unknown;
                 };
             };
@@ -1882,6 +3288,30 @@ export interface operations {
                      *     }
                      */
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    join: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Device-Id": string;
+            };
+            path: {
+                scheduleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 대기열 진입 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueJoinResponse"];
                 };
             };
         };
@@ -2020,6 +3450,522 @@ export interface operations {
                      *     }
                      */
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    sendMessageDoc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description 파티 ID
+                 * @example 1
+                 */
+                partyId: number;
+            };
+            cookie?: never;
+        };
+        /** @description 전송할 메시지 내용 */
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "message": "안녕하세요! 같이 공연 가요~"
+                 *     }
+                 */
+                "application/json": components["schemas"]["SendMessageRequest"];
+            };
+        };
+        responses: {
+            /** @description 메시지 전송 성공 - 브로드캐스트 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "CHAT",
+                     *       "partyId": 1,
+                     *       "senderId": 5,
+                     *       "senderNickname": "팬덤러버",
+                     *       "senderProfileImage": "https://example.com/profile.jpg",
+                     *       "message": "안녕하세요! 같이 공연 가요~",
+                     *       "timestamp": "2024-12-16T14:30:00"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ChatMessageResponse"];
+                };
+            };
+            /** @description 잘못된 요청 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description 파티 멤버가 아님 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "3101",
+                     *       "message": "파티에 접근할 권한이 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    leaveRoomDoc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description 파티 ID
+                 * @example 1
+                 */
+                partyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 퇴장 성공 - 브로드캐스트 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "LEAVE",
+                     *       "partyId": 1,
+                     *       "userId": 5,
+                     *       "userNickname": "팬덤러버",
+                     *       "message": "팬덤러버님이 퇴장하셨습니다",
+                     *       "timestamp": "2024-12-16T14:35:00",
+                     *       "participantCount": 3
+                     *     }
+                     */
+                    "application/json": components["schemas"]["LeaveRoomResponse"];
+                };
+            };
+            /** @description 파티장은 나갈 수 없음 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "8201",
+                     *       "message": "파티장은 채팅방을 나갈 수 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 파티 멤버가 아님 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "3101",
+                     *       "message": "파티에 접근할 권한이 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    kickMemberDoc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description 파티 ID
+                 * @example 1
+                 */
+                partyId: number;
+                /**
+                 * @description 강퇴할 멤버 ID
+                 * @example 3
+                 */
+                targetMemberId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 강퇴 성공 - 브로드캐스트 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "KICK",
+                     *       "partyId": 1,
+                     *       "kickedMemberId": 3,
+                     *       "kickedMemberNickname": "문제유저",
+                     *       "kickedByLeaderId": 1,
+                     *       "kickedByLeaderNickname": "파티장님",
+                     *       "message": "문제유저님이 강퇴되었습니다",
+                     *       "timestamp": "2024-12-16T14:40:00",
+                     *       "participantCount": 3
+                     *     }
+                     */
+                    "application/json": components["schemas"]["KickMemberResponse"];
+                };
+            };
+            /** @description 잘못된 요청 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "8202",
+                     *       "message": "자기 자신은 강퇴할 수 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 파티장이 아님 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "8203",
+                     *       "message": "파티장만 멤버를 강퇴할 수 있습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 대상을 찾을 수 없음 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "8204",
+                     *       "message": "파티 멤버가 아닙니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    joinRoomDoc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description 파티 ID
+                 * @example 1
+                 */
+                partyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 입장 성공 - 브로드캐스트 메시지 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "JOIN",
+                     *       "partyId": 1,
+                     *       "userId": 5,
+                     *       "userNickname": "팬덤러버",
+                     *       "userProfileImage": "https://example.com/profile.jpg",
+                     *       "message": "팬덤러버님이 입장하셨습니다",
+                     *       "timestamp": "2024-12-16T14:30:00",
+                     *       "participantCount": 4
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RoomJoinedResponse"];
+                };
+            };
+            /** @description 파티 멤버가 아님 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "3101",
+                     *       "message": "파티에 접근할 권한이 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 존재하지 않는 파티 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "3001",
+                     *       "message": "파티를 찾을 수 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    createReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 공연 회차 ID */
+                scheduleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReservationRequest"];
+            };
+        };
+        responses: {
+            /** @description 예매 세션 생성 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateReservationResponse"];
+                };
+            };
+            /** @description 잘못된 요청 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "INVALID_WAITING_TOKEN",
+                     *         "status": "400",
+                     *         "message": "유효하지 않은 대기열 토큰입니다."
+                     *       }
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 인증 실패 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "UNAUTHORIZED",
+                     *         "status": "401",
+                     *         "message": "로그인이 필요합니다."
+                     *       }
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 회차를 찾을 수 없음 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SCHEDULE_NOT_FOUND",
+                     *         "status": "404",
+                     *         "message": "일정을 찾을 수 없습니다."
+                     *       }
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    releaseSeats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 예매 ID */
+                reservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseSeatsRequest"];
+            };
+        };
+        responses: {
+            /** @description 좌석 해제 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseSeatsResponse"];
+                };
+            };
+            /** @description 잘못된 요청 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "SEAT_NOT_HELD",
+                     *         "status": "400",
+                     *         "message": "예매에 포함되지 않은 좌석입니다."
+                     *       }
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 예매를 찾을 수 없음 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RESERVATION_NOT_FOUND",
+                     *         "status": "404",
+                     *         "message": "예매를 찾을 수 없습니다."
+                     *       }
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    holdSeats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 예매 ID */
+                reservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HoldSeatsRequest"];
+            };
+        };
+        responses: {
+            /** @description 좌석 선점 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HoldSeatsResponse"];
+                };
+            };
+            /** @description 잘못된 요청 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description 예매를 찾을 수 없음 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RESERVATION_NOT_FOUND",
+                     *         "status": "404",
+                     *         "message": "예매를 찾을 수 없습니다."
+                     *       }
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 좌석 선점 충돌 (이미 선점된 좌석 포함) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "reservationId": 123,
+                     *       "refreshRequired": true,
+                     *       "conflicts": [
+                     *         {
+                     *           "performanceSeatId": 102,
+                     *           "currentStatus": "HOLD",
+                     *           "reason": "ALREADY_HELD"
+                     *         }
+                     *       ],
+                     *       "updatedAt": "2026-01-05T14:10:30"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HoldSeatsFailResponse"];
                 };
             };
         };
@@ -2595,6 +4541,134 @@ export interface operations {
             };
         };
     };
+    deleteParty: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 삭제 성공 */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 권한 없음 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "3105",
+                     *       "message": "파티장만 파티를 삭제할 수 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 파티를 찾을 수 없음 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "3001",
+                     *       "message": "파티를 찾을 수 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    updateParty: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePartyRequest"];
+            };
+        };
+        responses: {
+            /** @description 수정 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "partyId": 1,
+                     *       "leaderId": 1,
+                     *       "status": "수정 완료"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["UpdatePartyResponse"];
+                };
+            };
+            /** @description 잘못된 요청 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "3413",
+                     *       "message": "현재 인원보다 적게 최대 인원을 설정할 수 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 권한 없음 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "3104",
+                     *       "message": "파티장만 파티를 수정할 수 있습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 파티를 찾을 수 없음 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "3001",
+                     *       "message": "파티를 찾을 수 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
     rejectApplication: {
         parameters: {
             query?: never;
@@ -2931,6 +5005,47 @@ export interface operations {
             };
         };
     };
+    getPerformanceSeats: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description 기기 식별자 (대기열/active 판별용)
+                 * @example device-abc-123
+                 */
+                "X-Device-Id": string;
+            };
+            path: {
+                /**
+                 * @description 공연 회차 ID
+                 * @example 1
+                 */
+                scheduleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 좌석 목록 조회 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerformanceSeatResponse"][];
+                };
+            };
+            /** @description 대기열 미통과 */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerformanceSeatResponse"][];
+                };
+            };
+        };
+    };
     getPartyMembers: {
         parameters: {
             query?: never;
@@ -3023,7 +5138,6 @@ export interface operations {
     getMyCreatedParties: {
         parameters: {
             query?: {
-                status?: string;
                 page?: number;
                 size?: number;
             };
@@ -3044,10 +5158,93 @@ export interface operations {
             };
         };
     };
+    getMyCompletedParties: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 조회 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "parties": [
+                     *         {
+                     *           "partyId": 1,
+                     *           "participationType": "CREATED",
+                     *           "event": {
+                     *             "eventId": 1,
+                     *             "title": "BTS 콘서트 2025",
+                     *             "location": "잠실종합운동장",
+                     *             "scheduleTime": "2025-12-31T19:00:00"
+                     *           },
+                     *           "partyDetail": {
+                     *             "partyName": "즐거운 BTS 콘서트",
+                     *             "partyType": "LEAVE",
+                     *             "departureLocation": "강남역",
+                     *             "arrivalLocation": "잠실종합운동장",
+                     *             "maxMembers": 4,
+                     *             "currentMembers": 4
+                     *           },
+                     *           "leader": {
+                     *             "leaderId": 1,
+                     *             "nickname": "리더유저1",
+                     *             "profileImage": "https://example.com/profile.jpg"
+                     *           },
+                     *           "status": "COMPLETED",
+                     *           "completedAt": "2025-12-16T20:00:00",
+                     *           "createdAt": "2025-12-15T10:00:00"
+                     *         },
+                     *         {
+                     *           "partyId": 2,
+                     *           "participationType": "JOINED",
+                     *           "event": {
+                     *             "eventId": 2,
+                     *             "title": "블랙핑크 월드투어",
+                     *             "location": "고척스카이돔",
+                     *             "scheduleTime": "2025-11-15T20:00:00"
+                     *           },
+                     *           "partyDetail": {
+                     *             "partyName": "블핑 콘서트 같이 가요",
+                     *             "partyType": "LEAVE",
+                     *             "departureLocation": "신림역",
+                     *             "arrivalLocation": "고척스카이돔",
+                     *             "maxMembers": 5,
+                     *             "currentMembers": 3
+                     *           },
+                     *           "leader": {
+                     *             "leaderId": 2,
+                     *             "nickname": "리더유저2",
+                     *             "profileImage": "https://example.com/profile2.jpg"
+                     *           },
+                     *           "status": "COMPLETED",
+                     *           "completedAt": "2025-11-16T23:00:00",
+                     *           "createdAt": "2025-11-10T15:00:00"
+                     *         }
+                     *       ],
+                     *       "totalElements": 5,
+                     *       "totalPages": 1,
+                     *       "pageNumber": 0
+                     *     }
+                     */
+                    "application/json": components["schemas"]["GetCompletedPartiesResponse"];
+                };
+            };
+        };
+    };
     getMyApplications: {
         parameters: {
             query?: {
-                status?: string;
                 page?: number;
                 size?: number;
             };
@@ -3103,6 +5300,362 @@ export interface operations {
                      * @example {
                      *       "code": "4001",
                      *       "message": "일정을 찾을 수 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    subscribeToNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description SSE 연결 성공 (스트림 시작) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": components["schemas"]["SseEmitter"];
+                };
+            };
+            /** @description 인증 실패 (토큰 없음 또는 만료) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "7004",
+                     *       "message": "인증 정보가 유효하지 않습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 서버 연결 초과 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "503",
+                     *       "message": "서버의 최대 연결 수를 초과하여 더 이상 연결할 수 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    getMyChatRooms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 조회 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "chatRooms": [
+                     *         {
+                     *           "partyId": 1,
+                     *           "partyName": "지민이 최애 🎤",
+                     *           "participantCount": 3,
+                     *           "lastMessage": "안녕하세요! 같이 공연 가요~",
+                     *           "lastMessageTime": "2024-12-16T14:30:00",
+                     *           "unreadCount": 0
+                     *         },
+                     *         {
+                     *           "partyId": 2,
+                     *           "partyName": "뉴진스와 함께 🐰",
+                     *           "participantCount": 4,
+                     *           "lastMessage": "입장하셨습니다",
+                     *           "lastMessageTime": "2024-12-16T10:15:00",
+                     *           "unreadCount": 0
+                     *         }
+                     *       ],
+                     *       "totalCount": 2
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MyChatRoomsResponse"];
+                };
+            };
+        };
+    };
+    getChatRoomInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 조회 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "partyId": 1,
+                     *       "partyName": "지민이 최애 🎤",
+                     *       "participantCount": 3,
+                     *       "maxParticipants": 5,
+                     *       "isActive": true,
+                     *       "createdAt": "2024-12-15T10:00:00"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ChatRoomInfoResponse"];
+                };
+            };
+            /** @description 권한 없음 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "3101",
+                     *       "message": "파티에 접근할 권한이 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 채팅방을 찾을 수 없음 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "8001",
+                     *       "message": "채팅방을 찾을 수 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    getParticipants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 조회 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "partyId": 1,
+                     *       "participants": [
+                     *         {
+                     *           "userId": 1,
+                     *           "nickname": "파티장님",
+                     *           "profileImage": "https://example.com/profile1.jpg",
+                     *           "isLeader": true,
+                     *           "isOnline": false
+                     *         },
+                     *         {
+                     *           "userId": 2,
+                     *           "nickname": "팬덤러버",
+                     *           "profileImage": "https://example.com/profile2.jpg",
+                     *           "isLeader": false,
+                     *           "isOnline": false
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ParticipantListResponse"];
+                };
+            };
+            /** @description 권한 없음 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "3101",
+                     *       "message": "파티에 접근할 권한이 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    getChatHistory: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path: {
+                partyId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 조회 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "partyId": 1,
+                     *       "messages": [
+                     *         {
+                     *           "messageId": 1,
+                     *           "type": "JOIN",
+                     *           "senderId": 1,
+                     *           "senderNickname": "파티장님",
+                     *           "senderProfileImage": "https://example.com/profile1.jpg",
+                     *           "message": null,
+                     *           "timestamp": "2024-12-16T10:00:00",
+                     *           "kickedByLeaderId": null,
+                     *           "kickedByLeaderNickname": null
+                     *         },
+                     *         {
+                     *           "messageId": 2,
+                     *           "type": "CHAT",
+                     *           "senderId": 1,
+                     *           "senderNickname": "파티장님",
+                     *           "senderProfileImage": "https://example.com/profile1.jpg",
+                     *           "message": "안녕하세요!",
+                     *           "timestamp": "2024-12-16T10:01:00",
+                     *           "kickedByLeaderId": null,
+                     *           "kickedByLeaderNickname": null
+                     *         },
+                     *         {
+                     *           "messageId": 3,
+                     *           "type": "KICK",
+                     *           "senderId": 3,
+                     *           "senderNickname": "문제유저",
+                     *           "senderProfileImage": null,
+                     *           "message": null,
+                     *           "timestamp": "2024-12-16T10:10:00",
+                     *           "kickedByLeaderId": 1,
+                     *           "kickedByLeaderNickname": "파티장님"
+                     *         }
+                     *       ],
+                     *       "currentPage": 0,
+                     *       "totalPages": 1,
+                     *       "totalMessages": 3,
+                     *       "hasNext": false
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ChatHistoryResponse"];
+                };
+            };
+            /** @description 권한 없음 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "3101",
+                     *       "message": "파티에 접근할 권한이 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    getReservationSummary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 예매 ID */
+                reservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 조회 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservationSummaryResponse"];
+                };
+            };
+            /** @description 권한 없음 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "UNAUTHORIZED_RESERVATION_ACCESS",
+                     *         "status": "403",
+                     *         "message": "예매에 접근할 권한이 없습니다."
+                     *       }
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 예매를 찾을 수 없음 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RESERVATION_NOT_FOUND",
+                     *         "status": "404",
+                     *         "message": "예매를 찾을 수 없습니다."
+                     *       }
                      *     }
                      */
                     "application/json": unknown;
@@ -3274,6 +5827,63 @@ export interface operations {
                      * @example {
                      *       "code": "3201",
                      *       "message": "신청 내역을 찾을 수 없습니다."
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    cancelReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 예매 ID */
+                reservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 취소 성공 */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 잘못된 요청 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "CANNOT_CANCEL_PAID_RESERVATION",
+                     *         "status": "400",
+                     *         "message": "결제 완료된 예매는 취소할 수 없습니다."
+                     *       }
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description 예매를 찾을 수 없음 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RESERVATION_NOT_FOUND",
+                     *         "status": "404",
+                     *         "message": "예매를 찾을 수 없습니다."
+                     *       }
                      *     }
                      */
                     "application/json": unknown;

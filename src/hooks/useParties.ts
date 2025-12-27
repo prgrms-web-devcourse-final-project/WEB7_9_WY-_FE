@@ -64,7 +64,7 @@ const mapFlatPartyData = (p: Record<string, unknown>): Party => ({
   eventId: String(p.scheduleId || ''),
   eventName: p.eventName as string | undefined,
   preferredGender: (p.preferredGender as Party['preferredGender']) || 'ANY',
-  preferredAge: (p.preferredAge as Party['preferredAge']) || 'NONE',
+  preferredAge: (p.preferredAge as Party['preferredAge']) || 'ANY',
 });
 
 // Map API response to Party type (중첩/플랫 구조 모두 지원)
@@ -200,7 +200,7 @@ export function useCreateParty() {
       transportType: 'TAXI' | 'CARPOOL' | 'SUBWAY' | 'BUS' | 'WALK';
       maxMembers: number;
       preferredGender: 'MALE' | 'FEMALE' | 'ANY';
-      preferredAge: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'NONE';
+      preferredAge: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'ANY';
     }) => {
       const { data: response, error } = await partyApi.create(data);
       if (error) {
@@ -230,7 +230,7 @@ export function useUpdateParty() {
         transportType?: 'TAXI' | 'CARPOOL' | 'SUBWAY' | 'BUS' | 'WALK';
         maxMembers?: number;
         preferredGender?: 'MALE' | 'FEMALE' | 'ANY';
-        preferredAge?: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'NONE';
+        preferredAge?: 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'ANY';
       };
     }) => {
       const { error } = await partyApi.update(partyId, data);

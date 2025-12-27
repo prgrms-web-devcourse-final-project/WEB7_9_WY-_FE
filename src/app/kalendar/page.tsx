@@ -91,6 +91,7 @@ export default function KalendarPage() {
   const { artists: storeArtists, fetchArtists } = useArtistStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<KalendarEvent | null>(null);
+  const [selectedDayEvents, setSelectedDayEvents] = useState<{ date: number; events: KalendarEvent[] } | null>(null);
   const [filterArtists, setFilterArtists] = useState<string[]>([]);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   const [notificationEnabled, setNotificationEnabled] = useState<Record<string, boolean>>({});
@@ -429,6 +430,11 @@ export default function KalendarPage() {
         {kalendarDays.map((day, index) => (
           <Box
             key={index}
+            onClick={() => {
+              if (day && day.events.length > 0) {
+                setSelectedDayEvents({ date: day.date, events: day.events });
+              }
+            }}
             sx={{
               minHeight: { xs: 52, sm: 70, md: 90 },
               minWidth: 0,
@@ -438,9 +444,10 @@ export default function KalendarPage() {
               border: day && isToday(day.date) ? '2px solid' : '1px solid',
               borderColor: day && isToday(day.date) ? 'primary.main' : 'divider',
               transition: 'all 0.2s ease',
-              '&:hover': day ? {
+              cursor: day && day.events.length > 0 ? 'pointer' : 'default',
+              '&:hover': day && day.events.length > 0 ? {
                 borderColor: 'primary.main',
-                bgcolor: 'background.paper',
+                bgcolor: alpha(theme.palette.primary.main, 0.04),
               } : {},
             }}
           >
@@ -466,16 +473,10 @@ export default function KalendarPage() {
                   {day.events.slice(0, isDesktop ? 2 : 1).map((event) => (
                     <Box
                       key={event.id}
-                      onClick={() => setSelectedEvent(event)}
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: 0.5,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          opacity: 0.8,
-                        },
                       }}
                     >
                       <Box
@@ -523,6 +524,8 @@ export default function KalendarPage() {
           { type: 'birthday' as EventType, label: '생일' },
           { type: 'festival' as EventType, label: '페스티벌' },
           { type: 'award' as EventType, label: '시상식' },
+          { type: 'anniversary' as EventType, label: '기념일' },
+          { type: 'livestream' as EventType, label: '라이브' },
         ]).map(({ type, label }) => (
           <Box key={type} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Box
@@ -776,6 +779,163 @@ export default function KalendarPage() {
                 >
                   파티 찾기
                 </Button>
+              </Stack>
+            </DialogContent>
+          </>
+        )}
+      </Dialog>
+
+      {/* Day Events Modal - 날짜 클릭 시 해당 일자의 모든 일정 표시 */}
+      <Dialog
+        open={!!selectedDayEvents}
+        onClose={() => setSelectedDayEvents(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: 'background.paper',
+            borderRadius: 3,
+            overflow: 'hidden',
+          },
+        }}
+      >
+        {selectedDayEvents && (
+          <>
+            <DialogTitle sx={{ pb: 1, pr: 1 }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <CalendarTodayIcon sx={{ color: 'primary.main' }} />
+                  <Typography variant="h4" color="text.primary">
+                    {month + 1}월 {selectedDayEvents.date}일 일정
+                  </Typography>
+                </Stack>
+                <IconButton
+                  size="small"
+                  onClick={() => setSelectedDayEvents(null)}
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.text.secondary, 0.1),
+                    },
+                  }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Stack>
+            </DialogTitle>
+
+            <DialogContent sx={{ pt: 0 }}>
+              <Stack spacing={1.5} sx={{ mt: 1 }}>
+                {selectedDayEvents.events.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                    이 날에는 일정이 없습니다
+                  </Typography>
+                ) : (
+                  selectedDayEvents.events.map((event) => (
+                    <Box
+                      key={event.id}
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      {/* 헤더: 컬러닷 + 제목 + 타입칩 */}
+                      <Stack direction="row" alignItems="center" gap={1}>
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            bgcolor: getEventTypeColor(event.type),
+                            flexShrink: 0,
+                          }}
+                        />
+                        <Typography
+                          variant="body2"
+                          color="text.primary"
+                          fontWeight={500}
+                          sx={{
+                            flex: 1,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {event.title}
+                        </Typography>
+                        <EventChip eventType={event.type} size="small" />
+                      </Stack>
+
+                      {/* 상세 정보: 아티스트, 시간, 장소 */}
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5, flexWrap: 'wrap' }}>
+                        <Typography variant="caption" color="text.secondary">
+                          {event.artistName}
+                        </Typography>
+                        {event.time && (
+                          <>
+                            <Typography variant="caption" color="text.disabled">|</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {event.time}
+                            </Typography>
+                          </>
+                        )}
+                        {event.venue && (
+                          <>
+                            <Typography variant="caption" color="text.disabled">|</Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              maxWidth: 120,
+                            }}>
+                              {event.venue}
+                            </Typography>
+                          </>
+                        )}
+                      </Stack>
+
+                      {/* 액션 버튼 */}
+                      <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          startIcon={<ConfirmationNumberIcon sx={{ fontSize: 16 }} />}
+                          onClick={() => {
+                            setSelectedDayEvents(null);
+                            router.push(`/event/${event.id}`);
+                          }}
+                          sx={{
+                            flex: 1,
+                            fontSize: 12,
+                            py: 0.75,
+                            textTransform: 'none',
+                          }}
+                        >
+                          예매하기
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<GroupsIcon sx={{ fontSize: 16 }} />}
+                          onClick={() => {
+                            setSelectedDayEvents(null);
+                            router.push(`/party?scheduleId=${event.id}`);
+                          }}
+                          sx={{
+                            flex: 1,
+                            fontSize: 12,
+                            py: 0.75,
+                            textTransform: 'none',
+                          }}
+                        >
+                          파티찾기
+                        </Button>
+                      </Stack>
+                    </Box>
+                  ))
+                )}
               </Stack>
             </DialogContent>
           </>

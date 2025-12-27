@@ -13,10 +13,10 @@ import {
 import { useTheme, alpha } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import CheckIcon from '@mui/icons-material/Check';
 import { MainLayout } from '@/components/layout';
 import { ArtistAvatar, LoadingSpinner, PageHeader, Section, EmptyState } from '@/components/common';
 import { useArtistStore } from '@/stores/artistStore';
@@ -95,17 +95,6 @@ function ArtistItem({ artist, isFollowing, onToggleFollow }: ArtistItemProps) {
               일정
             </Typography>
           </Box>
-          <Box sx={{ textAlign: 'center' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <FavoriteIcon sx={{ fontSize: 16, color: 'secondary.main' }} />
-              <Typography variant="body2" color="text.secondary">
-                {(artist.fanCount / 10000).toFixed(0)}만
-              </Typography>
-            </Box>
-            <Typography variant="caption" color="text.disabled">
-              팬
-            </Typography>
-          </Box>
         </Box>
 
         {/* Follow Button */}
@@ -117,9 +106,9 @@ function ArtistItem({ artist, isFollowing, onToggleFollow }: ArtistItemProps) {
             isFollowLoading ? (
               <CircularProgress size={16} color="inherit" />
             ) : isFollowing ? (
-              <FavoriteIcon />
+              <CheckIcon />
             ) : (
-              <FavoriteBorderIcon />
+              <PersonAddAlt1Icon />
             )
           }
           onClick={(e) => {

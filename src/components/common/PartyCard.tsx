@@ -58,15 +58,15 @@ const genderLabels: Record<Gender, string> = {
 
 export default function PartyCard({
   title,
-  type,
-  status,
+  type = 'LEAVE',
+  status = 'RECRUITING',
   eventName,
   venueName,
   departure,
   arrival,
   transportType = 'TAXI',
-  currentMembers,
-  maxMembers,
+  currentMembers = 1,
+  maxMembers = 4,
   leaderNickname,
   leaderAge,
   leaderGender,
@@ -99,6 +99,11 @@ export default function PartyCard({
     },
   };
 
+  // 안전한 status 값 확보
+  const safeStatus = statusConfig[status] ? status : 'RECRUITING';
+  const safeType = type === 'LEAVE' || type === 'ARRIVE' ? type : 'LEAVE';
+  const safeTransportType = transportIcons[transportType] ? transportType : 'TAXI';
+
   const memberPercentage = (currentMembers / maxMembers) * 100;
 
   // 리더 정보 포맷
@@ -117,7 +122,7 @@ export default function PartyCard({
   return (
     <ButtonBase
       onClick={onClick}
-      aria-label={`${title} - ${type === 'LEAVE' ? '출발팟' : '복귀팟'} 파티, ${statusConfig[status].label}, ${currentMembers}/${maxMembers}명`}
+      aria-label={`${title} - ${safeType === 'LEAVE' ? '출발팟' : '복귀팟'} 파티, ${statusConfig[safeStatus].label}, ${currentMembers}/${maxMembers}명`}
       sx={{
         display: 'block',
         width: '100%',
@@ -151,24 +156,24 @@ export default function PartyCard({
               width: 24,
               height: 24,
               borderRadius: 0.75,
-              bgcolor: type === 'LEAVE'
+              bgcolor: safeType === 'LEAVE'
                 ? alpha(theme.palette.primary.main, 0.1)
                 : alpha(theme.palette.secondary.main, 0.1),
-              color: type === 'LEAVE'
+              color: safeType === 'LEAVE'
                 ? theme.palette.primary.main
                 : theme.palette.secondary.main,
             }}
           >
-            {type === 'LEAVE' ? <DirectionsCarIcon sx={{ fontSize: 14 }} /> : <HomeIcon sx={{ fontSize: 14 }} />}
+            {safeType === 'LEAVE' ? <DirectionsCarIcon sx={{ fontSize: 14 }} /> : <HomeIcon sx={{ fontSize: 14 }} />}
           </Box>
           <Typography
             sx={{
               fontSize: '0.75rem',
               fontWeight: 600,
-              color: type === 'LEAVE' ? theme.palette.primary.main : theme.palette.secondary.main,
+              color: safeType === 'LEAVE' ? theme.palette.primary.main : theme.palette.secondary.main,
             }}
           >
-            {type === 'LEAVE' ? '출발팟' : '복귀팟'}
+            {safeType === 'LEAVE' ? '출발팟' : '복귀팟'}
           </Typography>
 
           {/* Transport Type */}
@@ -184,9 +189,9 @@ export default function PartyCard({
               color: theme.palette.text.secondary,
             }}
           >
-            {transportIcons[transportType]}
+            {transportIcons[safeTransportType]}
             <Typography sx={{ fontSize: '0.65rem', fontWeight: 500 }}>
-              {transportLabels[transportType]}
+              {transportLabels[safeTransportType]}
             </Typography>
           </Box>
         </Box>
@@ -223,13 +228,13 @@ export default function PartyCard({
           )}
           <Chip
             size="small"
-            label={statusConfig[status].label}
+            label={statusConfig[safeStatus].label}
             sx={{
               height: 20,
               fontSize: '0.65rem',
               fontWeight: 600,
-              bgcolor: statusConfig[status].bgcolor,
-              color: statusConfig[status].color,
+              bgcolor: statusConfig[safeStatus].bgcolor,
+              color: statusConfig[safeStatus].color,
               '& .MuiChip-label': { px: 1 },
             }}
           />

@@ -123,6 +123,23 @@
    - 게스트 모드 vs 로그인 사용자 플로우
    - 에러 상태 및 로딩 상태
 
+3. **Playwright MCP 사용 시 주의사항**:
+   - 테스트 시작 전 `browser_tabs` action=list로 탭 상태 확인
+   - 불필요한 탭이 있으면 `browser_close`로 정리 후 시작
+   - `browser_navigate` 후 바로 `browser_click` 시 ref 만료 문제 발생 가능
+   - **권장 패턴**: `browser_run_code`로 네비게이션 + 대기 + 액션을 한 번에 수행
+   - 페이지 전환 후 `waitForTimeout(1000~2000)`으로 렌더링 대기
+   - ref 만료 에러 시 `browser_snapshot` 재캡처 후 재시도
+   ```javascript
+   // 권장 패턴 예시
+   async (page) => {
+     await page.goto('http://localhost:3000/path');
+     await page.waitForTimeout(1000);
+     await page.getByRole('button', { name: '버튼명' }).click();
+     return 'done';
+   }
+   ```
+
 ## 주요 기능
 - **게스트 모드**: 로그인 없이 아티스트 선택 및 캘린더 조회 가능
 - **반응형 레이아웃**: 데스크탑(md+)에서 사이드바 네비게이션

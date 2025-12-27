@@ -31,7 +31,7 @@ export default function CreatePartyPage() {
   const [transportType, setTransportType] = useState<'TAXI' | 'CARPOOL' | 'SUBWAY' | 'BUS' | 'WALK'>('TAXI');
   const [maxMembers, setMaxMembers] = useState(4);
   const [preferredGender, setPreferredGender] = useState<'MALE' | 'FEMALE' | 'ANY'>('ANY');
-  const [preferredAge, setPreferredAge] = useState<'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'NONE'>('NONE');
+  const [preferredAge, setPreferredAge] = useState<'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'ANY'>('ANY');
   const [description, setDescription] = useState('');
 
   useEffect(() => {
@@ -236,9 +236,9 @@ export default function CreatePartyPage() {
                     <Select
                       value={preferredAge}
                       label="선호 연령대"
-                      onChange={(e) => setPreferredAge(e.target.value as 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'NONE')}
+                      onChange={(e) => setPreferredAge(e.target.value as 'TEEN' | 'TWENTY' | 'THIRTY' | 'FORTY' | 'FIFTY_PLUS' | 'ANY')}
                     >
-                      <MenuItem value="NONE">무관</MenuItem>
+                      <MenuItem value="ANY">무관</MenuItem>
                       <MenuItem value="TEEN">10대</MenuItem>
                       <MenuItem value="TWENTY">20대</MenuItem>
                       <MenuItem value="THIRTY">30대</MenuItem>

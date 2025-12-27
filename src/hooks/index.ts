@@ -47,3 +47,18 @@ export {
   useRejectApplicant,
   useCancelApplication,
 } from './useParties';
+
+// Chat hooks
+export {
+  chatKeys,
+  useChatRooms,
+  useChatRoomInfo,
+  useChatMessages,
+  useChatParticipants,
+  useInvalidateChatQueries,
+} from './useChat';
+
+export { useChatWebSocket } from './useChatWebSocket';
+
+// Notification hooks
+export { useNotificationSSE } from './useNotificationSSE';

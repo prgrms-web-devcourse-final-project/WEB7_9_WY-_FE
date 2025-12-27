@@ -11,22 +11,38 @@ interface ChatState {
 }
 
 interface ChatActions {
+  // State setters
   setChatRooms: (rooms: ChatRoom[]) => void;
   setCurrentRoom: (roomId: string | null) => void;
-  addChatRoom: (room: ChatRoom) => void;
-  removeChatRoom: (roomId: string) => void;
-  sendMessage: (roomId: string, content: string, senderId: string, senderName: string) => void;
-  addSystemMessage: (roomId: string, content: string) => void;
   setMessages: (roomId: string, messages: ChatMessage[]) => void;
   setParticipants: (roomId: string, participants: ChatParticipant[]) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+
+  // Room actions
+  addChatRoom: (room: ChatRoom) => void;
+  removeChatRoom: (roomId: string) => void;
+  updateRoomLastMessage: (roomId: string, message: string, timestamp: string) => void;
+
+  // Message actions (for WebSocket)
+  addMessage: (roomId: string, message: ChatMessage) => void;
+  appendMessages: (roomId: string, messages: ChatMessage[]) => void;
+
+  // Participant actions
+  updateParticipants: (roomId: string, participants: ChatParticipant[]) => void;
+  removeParticipant: (roomId: string, participantId: string) => void;
+
+  // Legacy actions (for backward compatibility)
+  sendMessage: (roomId: string, content: string, senderId: string, senderName: string) => void;
+  addSystemMessage: (roomId: string, content: string) => void;
   kickParticipant: (roomId: string, participantId: string) => void;
   leaveRoom: (roomId: string, userId: string) => void;
+
+  // Getters
   getCurrentRoom: () => ChatRoom | undefined;
   getRoomByPartyId: (partyId: string) => ChatRoom | undefined;
   getCurrentMessages: () => ChatMessage[];
   getCurrentParticipants: () => ChatParticipant[];
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
 }
 
 type ChatStore = ChatState & ChatActions;
@@ -39,28 +55,108 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
   isLoading: false,
   error: null,
 
-  setChatRooms: (rooms: ChatRoom[]) => {
-    set({ chatRooms: rooms });
-  },
+  // State setters
+  setChatRooms: (rooms) => set({ chatRooms: rooms }),
 
-  setCurrentRoom: (roomId: string | null) => {
-    set({ currentRoomId: roomId });
-  },
+  setCurrentRoom: (roomId) => set({ currentRoomId: roomId }),
 
-  addChatRoom: (room: ChatRoom) => {
+  setMessages: (roomId, messages) =>
+    set((state) => ({
+      messages: { ...state.messages, [roomId]: messages },
+    })),
+
+  setParticipants: (roomId, participants) =>
+    set((state) => ({
+      participants: { ...state.participants, [roomId]: participants },
+    })),
+
+  setLoading: (loading) => set({ isLoading: loading }),
+
+  setError: (error) => set({ error }),
+
+  // Room actions
+  addChatRoom: (room) =>
     set((state) => ({
       chatRooms: [...state.chatRooms, room],
-    }));
-  },
+    })),
 
-  removeChatRoom: (roomId: string) => {
+  removeChatRoom: (roomId) =>
     set((state) => ({
       chatRooms: state.chatRooms.filter((r) => r.id !== roomId),
       currentRoomId: state.currentRoomId === roomId ? null : state.currentRoomId,
-    }));
-  },
+    })),
 
-  sendMessage: (roomId: string, content: string, senderId: string, senderName: string) => {
+  updateRoomLastMessage: (roomId, message, timestamp) =>
+    set((state) => ({
+      chatRooms: state.chatRooms.map((room) =>
+        room.id === roomId || room.partyId === roomId
+          ? { ...room, lastMessage: message, lastMessageTime: timestamp }
+          : room
+      ),
+    })),
+
+  // Message actions
+  addMessage: (roomId, message) =>
+    set((state) => {
+      const roomMessages = state.messages[roomId] || [];
+      // 중복 메시지 방지
+      if (roomMessages.some((m) => m.id === message.id)) {
+        return state;
+      }
+
+      return {
+        messages: {
+          ...state.messages,
+          [roomId]: [...roomMessages, message],
+        },
+        // 마지막 메시지 업데이트 (CHAT 메시지만)
+        chatRooms:
+          message.type === 'CHAT' || !message.type
+            ? state.chatRooms.map((room) =>
+                room.id === roomId || room.partyId === roomId
+                  ? {
+                      ...room,
+                      lastMessage: message.content,
+                      lastMessageTime: message.timestamp,
+                    }
+                  : room
+              )
+            : state.chatRooms,
+      };
+    }),
+
+  appendMessages: (roomId, messages) =>
+    set((state) => {
+      const existingMessages = state.messages[roomId] || [];
+      const existingIds = new Set(existingMessages.map((m) => m.id));
+      const newMessages = messages.filter((m) => !existingIds.has(m.id));
+
+      return {
+        messages: {
+          ...state.messages,
+          [roomId]: [...newMessages, ...existingMessages],
+        },
+      };
+    }),
+
+  // Participant actions
+  updateParticipants: (roomId, participants) =>
+    set((state) => ({
+      participants: { ...state.participants, [roomId]: participants },
+    })),
+
+  removeParticipant: (roomId, participantId) =>
+    set((state) => ({
+      participants: {
+        ...state.participants,
+        [roomId]: (state.participants[roomId] || []).filter(
+          (p) => p.id !== participantId
+        ),
+      },
+    })),
+
+  // Legacy actions
+  sendMessage: (roomId, content, senderId, senderName) => {
     const newMessage: ChatMessage = {
       id: `msg-${Date.now()}`,
       roomId,
@@ -84,7 +180,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     }));
   },
 
-  addSystemMessage: (roomId: string, content: string) => {
+  addSystemMessage: (roomId, content) => {
     const systemMessage: ChatMessage = {
       id: `sys-${Date.now()}`,
       roomId,
@@ -103,20 +199,8 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     }));
   },
 
-  setMessages: (roomId: string, messages: ChatMessage[]) => {
-    set((state) => ({
-      messages: { ...state.messages, [roomId]: messages },
-    }));
-  },
-
-  setParticipants: (roomId: string, participants: ChatParticipant[]) => {
-    set((state) => ({
-      participants: { ...state.participants, [roomId]: participants },
-    }));
-  },
-
-  kickParticipant: (roomId: string, participantId: string) => {
-    const { participants } = get();
+  kickParticipant: (roomId, participantId) => {
+    const { participants, addSystemMessage } = get();
     const roomParticipants = participants[roomId] || [];
     const kickedParticipant = roomParticipants.find((p) => p.id === participantId);
 
@@ -128,11 +212,11 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         },
       }));
 
-      get().addSystemMessage(roomId, `${kickedParticipant.name}님이 강퇴되었습니다.`);
+      addSystemMessage(roomId, `${kickedParticipant.name}님이 강퇴되었습니다.`);
     }
   },
 
-  leaveRoom: (roomId: string, userId: string) => {
+  leaveRoom: (roomId, userId) => {
     const { participants } = get();
     const roomParticipants = participants[roomId] || [];
     const leavingParticipant = roomParticipants.find((p) => p.id === userId);
@@ -149,12 +233,13 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     }
   },
 
+  // Getters
   getCurrentRoom: () => {
     const { chatRooms, currentRoomId } = get();
     return chatRooms.find((r) => r.id === currentRoomId || r.partyId === currentRoomId);
   },
 
-  getRoomByPartyId: (partyId: string) => {
+  getRoomByPartyId: (partyId) => {
     const { chatRooms } = get();
     return chatRooms.find((r) => r.partyId === partyId);
   },
@@ -167,13 +252,5 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
   getCurrentParticipants: () => {
     const { participants, currentRoomId } = get();
     return currentRoomId ? participants[currentRoomId] || [] : [];
-  },
-
-  setLoading: (loading: boolean) => {
-    set({ isLoading: loading });
-  },
-
-  setError: (error: string | null) => {
-    set({ error });
   },
 }));

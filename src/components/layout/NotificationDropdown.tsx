@@ -221,10 +221,10 @@ export default function NotificationDropdown({
   onClose,
 }: NotificationDropdownProps) {
   const theme = useTheme();
-  const { notifications, unreadCount, markAllAsRead } = useNotificationStore();
+  const { notifications, unreadCount, syncMarkAllAsRead } = useNotificationStore();
 
-  const handleMarkAllAsRead = () => {
-    markAllAsRead();
+  const handleMarkAllAsRead = async () => {
+    await syncMarkAllAsRead();
   };
 
   return (

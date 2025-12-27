@@ -17,6 +17,8 @@ import {
   Button,
   Divider,
   keyframes,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -25,10 +27,15 @@ import MenuIcon from '@mui/icons-material/Menu';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import GroupIcon from '@mui/icons-material/Group';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useChatStore } from '@/stores/chatStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { LoadingSpinner } from '@/components/common';
+import { useChatMessages, useChatParticipants, useChatRoomInfo } from '@/hooks/useChat';
+import { useChatWebSocket } from '@/hooks/useChatWebSocket';
+import { ChatConnectionStatus } from '@/components/chat';
 
 const fadeInUp = keyframes`
   from {
@@ -69,69 +76,87 @@ export default function ChatRoomPage() {
   const params = useParams();
   const theme = useTheme();
   const chatId = params.chatId as string;
+  const partyIdNum = parseInt(chatId, 10);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuthStore();
   const {
-    chatRooms,
-    addChatRoom,
+    messages: storeMessages,
     setCurrentRoom,
-    getCurrentRoom,
-    messages,
-    sendMessage,
-    participants,
-    setParticipants,
-    kickParticipant,
+    addChatRoom,
+    getRoomByPartyId,
   } = useChatStore();
 
   const [inputMessage, setInputMessage] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // API hooks
+  const { data: roomInfo, isLoading: isLoadingRoom, error: roomError, isError: isRoomError } = useChatRoomInfo(partyIdNum);
+  const {
+    isLoading: isLoadingMessages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useChatMessages(partyIdNum);
+  const { data: participants = [] } = useChatParticipants(partyIdNum);
+
+  // 채팅방 에러 처리 (404 등)
+  const isChatRoomNotFound = isRoomError && roomError instanceof Error && roomError.message === 'CHAT_ROOM_NOT_FOUND';
+
+  // WebSocket hook
+  const {
+    connectionState,
+    isConnected,
+    sendMessage: wsSendMessage,
+    leaveRoom: wsLeaveRoom,
+    kickMember: wsKickMember,
+  } = useChatWebSocket({
+    partyId: partyIdNum,
+    autoJoin: true,
+  });
+
+  // 현재 채팅방 메시지 (스토어에서 가져옴)
+  const roomMessages = storeMessages[chatId] || [];
+
+  // 채팅방 설정
   useEffect(() => {
-    if (!isAllowed) return;
-    // TODO: Fetch chat rooms from API when available
-    setCurrentRoom(chatId);
+    if (!isAllowed || !chatId) return;
 
-    // Check if room exists in store (for newly created parties)
-    const existingRoom = chatRooms.find((r) => r.id === chatId || r.partyId === chatId);
-
-    if (!existingRoom && user) {
-      // Create a new chat room for newly created party
+    const existingRoom = getRoomByPartyId(chatId);
+    if (!existingRoom && roomInfo) {
       const newRoom = {
         id: chatId,
         partyId: chatId,
-        title: '새 파티 채팅방',
-        participants: [
-          {
-            id: user.id,
-            name: user.name,
-            isOwner: true,
-          },
-        ],
-        isOwner: true,
-        lastMessage: '',
-        lastMessageTime: new Date().toISOString(),
+        title: roomInfo.partyName || '파티 채팅방',
+        participants: [],
+        isOwner: false,
         unreadCount: 0,
       };
       addChatRoom(newRoom);
-      setParticipants(chatId, newRoom.participants);
     }
-  }, [chatId, chatRooms, setCurrentRoom, participants, setParticipants, user, addChatRoom, isAllowed]);
+    setCurrentRoom(chatId);
+  }, [chatId, isAllowed, roomInfo, getRoomByPartyId, addChatRoom, setCurrentRoom]);
 
-  const currentRoom = getCurrentRoom();
-  const actualRoomId = currentRoom?.id || chatId;
-
-  const currentMessages = messages[actualRoomId];
+  // 스크롤 to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [currentMessages]);
+  }, [roomMessages.length]);
 
-  const roomMessages = messages[actualRoomId] || [];
-  const roomParticipants = participants[actualRoomId] || [];
+  // 무한 스크롤 핸들러
+  const handleScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // 상단에 도달하면 이전 메시지 로드
+    if (container.scrollTop === 0 && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
 
   const handleSend = () => {
-    if (!inputMessage.trim() || !user) return;
-    sendMessage(actualRoomId, inputMessage.trim(), user.id, user.name);
+    if (!inputMessage.trim() || !isConnected) return;
+    wsSendMessage(inputMessage.trim());
     setInputMessage('');
   };
 
@@ -142,10 +167,24 @@ export default function ChatRoomPage() {
     }
   };
 
+  const handleLeaveRoom = () => {
+    wsLeaveRoom();
+    router.push('/chats');
+  };
+
+  const handleKickMember = (memberId: string) => {
+    wsKickMember(parseInt(memberId, 10));
+  };
+
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
   };
+
+  // 현재 유저가 파티장인지 확인
+  const isLeader = participants.some(
+    (p) => p.id === user?.id && p.role === 'LEADER'
+  );
 
   if (isAuthLoading) {
     return <LoadingSpinner fullScreen message="로딩 중..." />;
@@ -155,9 +194,46 @@ export default function ChatRoomPage() {
     return null;
   }
 
-  if (!currentRoom) {
-    return null;
+  if (isLoadingRoom) {
+    return <LoadingSpinner fullScreen message="채팅방 로딩 중..." />;
   }
+
+  // 채팅방을 찾을 수 없는 경우 에러 UI 표시
+  if (isChatRoomNotFound || isRoomError) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'background.default',
+          gap: 3,
+          p: 3,
+        }}
+      >
+        <ErrorOutlineIcon sx={{ fontSize: 64, color: 'error.main', opacity: 0.8 }} />
+        <Typography variant="h5" fontWeight={600} textAlign="center">
+          {isChatRoomNotFound ? '채팅방을 찾을 수 없습니다' : '채팅방 로딩 실패'}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" textAlign="center">
+          {isChatRoomNotFound
+            ? '삭제되었거나 존재하지 않는 채팅방입니다.'
+            : '채팅방 정보를 불러오는 중 오류가 발생했습니다.'}
+        </Typography>
+        <Button
+          variant="contained"
+          onClick={() => router.push('/chats')}
+          sx={{ mt: 2 }}
+        >
+          채팅 목록으로 돌아가기
+        </Button>
+      </Box>
+    );
+  }
+
+  const roomTitle = roomInfo?.partyName || '파티 채팅방';
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
@@ -189,18 +265,11 @@ export default function ChatRoomPage() {
             <ArrowBackIcon />
           </IconButton>
           <Box>
-            <Typography variant="h4" fontWeight={600}>{currentRoom.title}</Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Box
-                sx={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  bgcolor: 'success.main',
-                }}
-              />
+            <Typography variant="h4" fontWeight={600}>{roomTitle}</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ChatConnectionStatus state={connectionState} showLabel={false} />
               <Typography variant="caption" color="text.secondary">
-                {roomParticipants.length}명 참여 중
+                {participants.length}명 참여 중
               </Typography>
             </Box>
           </Box>
@@ -221,6 +290,8 @@ export default function ChatRoomPage() {
 
       {/* Messages with gradient background */}
       <Box
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
         sx={{
           flex: 1,
           overflow: 'auto',
@@ -231,132 +302,172 @@ export default function ChatRoomPage() {
           background: `linear-gradient(180deg, ${alpha(theme.palette.background.default, 1)} 0%, ${alpha(theme.palette.background.paper, 0.5)} 100%)`,
         }}
       >
-        {roomMessages.map((message, index) => {
-          const isOwn = message.senderId === user?.id || message.senderId === 'user-1';
-          const isSystem = message.isSystem;
+        {/* Load more indicator */}
+        {isFetchingNextPage && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        )}
 
-          if (isSystem) {
+        {/* Loading state */}
+        {isLoadingMessages && roomMessages.length === 0 ? (
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <CircularProgress size={32} />
+          </Box>
+        ) : roomMessages.length === 0 ? (
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column',
+              gap: 1,
+              color: 'text.secondary',
+            }}
+          >
+            <GroupIcon sx={{ fontSize: 48, opacity: 0.3 }} />
+            <Typography variant="body2">아직 메시지가 없습니다</Typography>
+            <Typography variant="caption" color="text.disabled">
+              첫 메시지를 보내보세요!
+            </Typography>
+          </Box>
+        ) : (
+          roomMessages.map((message, index) => {
+            const isOwn = user ? message.senderId === user.id : message.isOwn;
+            const isSystem = message.isSystem;
+
+            if (isSystem) {
+              return (
+                <Box
+                  key={message.id}
+                  sx={{
+                    textAlign: 'center',
+                    my: 2,
+                    animation: `${fadeInUp} 0.3s ease-out`,
+                    animationDelay: `${Math.min(index * 0.05, 0.5)}s`,
+                    animationFillMode: 'both',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'inline-block',
+                      px: 2,
+                      py: 0.5,
+                      borderRadius: 10,
+                      bgcolor: alpha(theme.palette.divider, 0.3),
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      {message.content}
+                    </Typography>
+                  </Box>
+                </Box>
+              );
+            }
+
             return (
               <Box
                 key={message.id}
                 sx={{
-                  textAlign: 'center',
-                  my: 2,
-                  animation: `${fadeInUp} 0.3s ease-out`,
-                  animationDelay: `${index * 0.05}s`,
+                  display: 'flex',
+                  flexDirection: isOwn ? 'row-reverse' : 'row',
+                  gap: 1,
+                  alignItems: 'flex-end',
+                  animation: isOwn ? `${slideInRight} 0.3s ease-out` : `${slideIn} 0.3s ease-out`,
+                  animationDelay: `${Math.min(index * 0.05, 0.5)}s`,
                   animationFillMode: 'both',
                 }}
               >
+                {!isOwn && (
+                  <Avatar
+                    src={message.senderAvatar}
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      bgcolor: 'primary.main',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
+                    }}
+                  >
+                    {message.senderName?.charAt(0) || '?'}
+                  </Avatar>
+                )}
                 <Box
                   sx={{
-                    display: 'inline-block',
-                    px: 2,
-                    py: 0.5,
-                    borderRadius: 10,
-                    bgcolor: alpha(theme.palette.divider, 0.3),
+                    maxWidth: '70%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: isOwn ? 'flex-end' : 'flex-start',
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary">
-                    {message.content}
+                  {!isOwn && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'text.secondary',
+                        mb: 0.5,
+                        ml: 1,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {message.senderName}
+                    </Typography>
+                  )}
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      bgcolor: isOwn
+                        ? `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`
+                        : alpha(theme.palette.background.paper, 0.9),
+                      background: isOwn
+                        ? `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`
+                        : alpha(theme.palette.background.paper, 0.9),
+                      color: isOwn ? 'white' : 'text.primary',
+                      px: 2,
+                      py: 1.5,
+                      borderRadius: 2.5,
+                      borderTopRightRadius: isOwn ? 4 : 20,
+                      borderTopLeftRadius: isOwn ? 20 : 4,
+                      boxShadow: isOwn
+                        ? `0 4px 16px ${alpha(theme.palette.secondary.main, 0.3)}`
+                        : `0 2px 8px ${alpha(theme.palette.common.black, 0.1)}`,
+                      backdropFilter: !isOwn ? 'blur(10px)' : 'none',
+                      border: !isOwn ? `1px solid ${alpha(theme.palette.divider, 0.2)}` : 'none',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        transform: 'scale(1.02)',
+                      },
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {message.content}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.disabled',
+                      mt: 0.5,
+                      mx: 1,
+                      fontSize: 10,
+                    }}
+                  >
+                    {formatTime(message.timestamp)}
                   </Typography>
                 </Box>
               </Box>
             );
-          }
-
-          return (
-            <Box
-              key={message.id}
-              sx={{
-                display: 'flex',
-                flexDirection: isOwn ? 'row-reverse' : 'row',
-                gap: 1,
-                alignItems: 'flex-end',
-                animation: isOwn ? `${slideInRight} 0.3s ease-out` : `${slideIn} 0.3s ease-out`,
-                animationDelay: `${index * 0.05}s`,
-                animationFillMode: 'both',
-              }}
-            >
-              {!isOwn && (
-                <Avatar
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    bgcolor: 'primary.main',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
-                  }}
-                >
-                  {message.senderName.charAt(0)}
-                </Avatar>
-              )}
-              <Box
-                sx={{
-                  maxWidth: '70%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: isOwn ? 'flex-end' : 'flex-start',
-                }}
-              >
-                {!isOwn && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: 'text.secondary',
-                      mb: 0.5,
-                      ml: 1,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {message.senderName}
-                  </Typography>
-                )}
-                <Box
-                  sx={{
-                    position: 'relative',
-                    bgcolor: isOwn
-                      ? `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`
-                      : alpha(theme.palette.background.paper, 0.9),
-                    background: isOwn
-                      ? `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`
-                      : alpha(theme.palette.background.paper, 0.9),
-                    color: isOwn ? 'white' : 'text.primary',
-                    px: 2,
-                    py: 1.5,
-                    borderRadius: 2.5,
-                    borderTopRightRadius: isOwn ? 4 : 20,
-                    borderTopLeftRadius: isOwn ? 20 : 4,
-                    boxShadow: isOwn
-                      ? `0 4px 16px ${alpha(theme.palette.secondary.main, 0.3)}`
-                      : `0 2px 8px ${alpha(theme.palette.common.black, 0.1)}`,
-                    backdropFilter: !isOwn ? 'blur(10px)' : 'none',
-                    border: !isOwn ? `1px solid ${alpha(theme.palette.divider, 0.2)}` : 'none',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      transform: 'scale(1.02)',
-                    },
-                  }}
-                >
-                  <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
-                    {message.content}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: 'text.disabled',
-                    mt: 0.5,
-                    mx: 1,
-                    fontSize: 10,
-                  }}
-                >
-                  {formatTime(message.timestamp)}
-                </Typography>
-              </Box>
-            </Box>
-          );
-        })}
+          })
+        )}
         <div ref={messagesEndRef} />
       </Box>
 
@@ -404,10 +515,11 @@ export default function ChatRoomPage() {
           <TextField
             fullWidth
             size="small"
-            placeholder="메시지를 입력하세요..."
+            placeholder={isConnected ? '메시지를 입력하세요...' : '연결 중...'}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
+            disabled={!isConnected}
             variant="standard"
             InputProps={{
               disableUnderline: true,
@@ -433,23 +545,23 @@ export default function ChatRoomPage() {
           </IconButton>
           <IconButton
             onClick={handleSend}
-            disabled={!inputMessage.trim()}
+            disabled={!inputMessage.trim() || !isConnected}
             sx={{
               width: 40,
               height: 40,
-              background: inputMessage.trim()
+              background: inputMessage.trim() && isConnected
                 ? `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`
                 : alpha(theme.palette.action.disabled, 0.3),
               color: 'white',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                transform: inputMessage.trim() ? 'scale(1.1)' : 'none',
-                boxShadow: inputMessage.trim()
+                transform: inputMessage.trim() && isConnected ? 'scale(1.1)' : 'none',
+                boxShadow: inputMessage.trim() && isConnected
                   ? `0 6px 20px ${alpha(theme.palette.secondary.main, 0.4)}`
                   : 'none',
               },
               '&:active': {
-                transform: inputMessage.trim() ? 'scale(0.95)' : 'none',
+                transform: inputMessage.trim() && isConnected ? 'scale(0.95)' : 'none',
               },
               '&:disabled': {
                 color: 'text.disabled',
@@ -465,22 +577,22 @@ export default function ChatRoomPage() {
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <Box sx={{ width: 280, p: 2 }}>
           <Typography variant="h4" sx={{ mb: 2 }}>
-            참여자 ({roomParticipants.length})
+            참여자 ({participants.length})
           </Typography>
           <Divider sx={{ mb: 2 }} />
           <List disablePadding>
-            {roomParticipants.map((participant) => (
+            {participants.map((participant) => (
               <ListItem key={participant.id} disableGutters>
                 <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'primary.main' }}>
-                    {participant.name.charAt(0)}
+                  <Avatar src={participant.avatar} sx={{ bgcolor: 'primary.main' }}>
+                    {participant.name?.charAt(0) || '?'}
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
                   primary={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {participant.name}
-                      {participant.isOwner && (
+                      {participant.role === 'LEADER' && (
                         <Typography variant="caption" color="secondary.main">
                           방장
                         </Typography>
@@ -488,12 +600,12 @@ export default function ChatRoomPage() {
                     </Box>
                   }
                 />
-                {currentRoom.isOwner && !participant.isOwner && (
+                {isLeader && participant.role !== 'LEADER' && participant.id !== user?.id && (
                   <ListItemSecondaryAction>
                     <IconButton
                       size="small"
                       color="error"
-                      onClick={() => kickParticipant(actualRoomId, participant.id)}
+                      onClick={() => handleKickMember(participant.id)}
                     >
                       <PersonRemoveIcon fontSize="small" />
                     </IconButton>
@@ -503,7 +615,7 @@ export default function ChatRoomPage() {
             ))}
           </List>
           <Divider sx={{ my: 2 }} />
-          <Button fullWidth variant="outlined" color="error" onClick={() => router.push('/chats')}>
+          <Button fullWidth variant="outlined" color="error" onClick={handleLeaveRoom}>
             채팅방 나가기
           </Button>
         </Box>

@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import {
   Box,
   Typography,
   IconButton,
-  Card,
-  CardContent,
   Stack,
   Divider,
   CircularProgress,
@@ -17,26 +15,23 @@ import {
   FormControlLabel,
   Chip,
   Button,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import GroupsIcon from '@mui/icons-material/Groups';
+import TimerIcon from '@mui/icons-material/Timer';
 import { MainLayout } from '@/components/layout';
-import { GradientButton, EventChip, ArtistAvatar } from '@/components/common';
+import { GradientButton, EventChip } from '@/components/common';
 import { useBookingStore } from '@/stores/bookingStore';
-import { performanceApi } from '@/api/client';
+import { authApi } from '@/api/client';
 import type { SeatSection, ScheduleCategory } from '@/types';
+import type { components } from '@/api/types';
 
-// 회차 정보 인터페이스
-interface PerformanceSchedule {
-  scheduleId?: number;
-  performanceDate?: string;
-  startTime?: string;
-  PerformanceNo?: number;
-  status?: string;
-}
+// API 타입 별칭
+type PerformanceDetailResponse = components['schemas']['PerformanceDetailResponse'];
 
 // 스케줄 상태 한글 변환
 const getStatusLabel = (status?: string): { label: string; color: 'success' | 'warning' | 'error' | 'default' } => {
@@ -77,6 +72,44 @@ const getCategoryButtonText = (category?: ScheduleCategory): string => {
   }
 };
 
+// 날짜 포맷팅 함수
+const formatDateRange = (startDate?: string, endDate?: string): string => {
+  if (!startDate) return '';
+
+  const start = new Date(startDate);
+  const startStr = start.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  if (!endDate || startDate === endDate) {
+    return startStr;
+  }
+
+  const end = new Date(endDate);
+  const endStr = end.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  return `${startStr} ~ ${endStr}`;
+};
+
+// 러닝타임 포맷팅
+const formatRunningTime = (minutes?: number): string => {
+  if (!minutes) return '';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours > 0 && mins > 0) {
+    return `${hours}시간 ${mins}분`;
+  } else if (hours > 0) {
+    return `${hours}시간`;
+  }
+  return `${mins}분`;
+};
+
 export default function EventDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -85,7 +118,8 @@ export default function EventDetailPage() {
   const { setCurrentEvent, setSections, currentEvent, sections, setSelectedScheduleId } = useBookingStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [schedules, setSchedules] = useState<PerformanceSchedule[]>([]);
+  const [performanceDetail, setPerformanceDetail] = useState<PerformanceDetailResponse | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSchedule, setSelectedSchedule] = useState<string>('');
   // eventCategory를 나중에 API 응답에서 설정할 수 있도록 유지
   const [eventCategory] = useState<ScheduleCategory | undefined>(undefined);
@@ -105,10 +139,14 @@ export default function EventDetailPage() {
 
       try {
         const performanceId = Number(eventId);
-        const response = await performanceApi.getDetail(performanceId);
+        const response = await authApi.GET('/api/v1/performance/{performanceId}', {
+          params: { path: { performanceId } }
+        });
 
         if (response.data) {
           const detail = response.data;
+          setPerformanceDetail(detail);
+
           // Convert API response to KalendarEvent format for booking store
           const event = {
             id: String(performanceId),
@@ -122,14 +160,9 @@ export default function EventDetailPage() {
           };
           setCurrentEvent(event);
 
-          // 회차 정보 설정
-          if (detail.schedules && detail.schedules.length > 0) {
-            setSchedules(detail.schedules);
-            // 첫 번째 예매 가능한 회차를 기본 선택
-            const firstAvailable = detail.schedules.find(s => s.status === 'AVAILABLE');
-            if (firstAvailable?.scheduleId) {
-              setSelectedSchedule(String(firstAvailable.scheduleId));
-            }
+          // availableDates가 있으면 첫 번째 날짜 선택
+          if (detail.availableDates && detail.availableDates.length > 0) {
+            setSelectedDate(detail.availableDates[0]);
           }
 
           // priceGrades를 섹션으로 변환
@@ -164,6 +197,37 @@ export default function EventDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId, setCurrentEvent, setSections]);
 
+  // 선택된 날짜에 해당하는 회차 목록 필터링
+  const filteredSchedules = useMemo(() => {
+    if (!performanceDetail?.schedules || !selectedDate) return [];
+    return performanceDetail.schedules.filter(
+      (schedule) => schedule.performanceDate === selectedDate
+    );
+  }, [performanceDetail?.schedules, selectedDate]);
+
+  // 날짜 변경 시 회차 선택 초기화
+  useEffect(() => {
+    if (filteredSchedules.length > 0) {
+      const firstAvailable = filteredSchedules.find(s => s.status === 'AVAILABLE');
+      if (firstAvailable?.scheduleId) {
+        setSelectedSchedule(String(firstAvailable.scheduleId));
+      } else if (filteredSchedules[0]?.scheduleId) {
+        setSelectedSchedule(String(filteredSchedules[0].scheduleId));
+      }
+    } else {
+      setSelectedSchedule('');
+    }
+  }, [filteredSchedules]);
+
+  const handleDateChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newDate: string | null
+  ) => {
+    if (newDate !== null) {
+      setSelectedDate(newDate);
+    }
+  };
+
   const handleScheduleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedSchedule(event.target.value);
   };
@@ -188,7 +252,7 @@ export default function EventDetailPage() {
     );
   }
 
-  if (!currentEvent) {
+  if (!currentEvent || !performanceDetail) {
     return null;
   }
 
@@ -210,190 +274,293 @@ export default function EventDetailPage() {
   };
 
   // 선택된 회차 정보 가져오기
-  const selectedScheduleInfo = schedules.find(s => String(s.scheduleId) === selectedSchedule);
+  const selectedScheduleInfo = filteredSchedules.find(s => String(s.scheduleId) === selectedSchedule);
   const isBookingEnabled = selectedSchedule && selectedScheduleInfo?.status === 'AVAILABLE';
 
   return (
     <MainLayout hideNavigation>
       <Box sx={{ p: 2 }}>
+        {/* 헤더 */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <IconButton onClick={() => router.back()} sx={{ mr: 1 }}>
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h2">이벤트 상세</Typography>
+          <Typography variant="h2">공연 상세</Typography>
         </Box>
 
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Stack direction="row" spacing={2} alignItems="flex-start" sx={{ mb: 2 }}>
-              <ArtistAvatar
-                name={currentEvent.artistName || ''}
-                size="large"
-              />
-              <Box sx={{ flex: 1 }}>
-                <EventChip eventType={currentEvent.type} sx={{ mb: 1 }} />
-                <Typography variant="h3">{currentEvent.title}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {currentEvent.artistName}
+        {/* 공연 정보 카드 */}
+        <Box
+          sx={{
+            mb: 3,
+            p: 2,
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            boxShadow: 1,
+          }}
+        >
+          <Stack direction="row" spacing={2} alignItems="flex-start">
+            {/* 포스터 이미지 */}
+            <Box
+              component="img"
+              src={performanceDetail.posterImageUrl || '/placeholder-poster.png'}
+              alt={performanceDetail.title || '공연 포스터'}
+              sx={{
+                width: 120,
+                height: 160,
+                borderRadius: 1,
+                objectFit: 'cover',
+                bgcolor: 'grey.200',
+                flexShrink: 0,
+              }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
+            />
+
+            {/* 공연 정보 */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <EventChip eventType={currentEvent.type} sx={{ mb: 1 }} />
+              <Typography variant="h3" sx={{ mb: 0.5, wordBreak: 'break-word' }}>
+                {performanceDetail.title}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                {performanceDetail.artist?.artistName}
+              </Typography>
+            </Box>
+          </Stack>
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* 상세 정보 */}
+          <Stack spacing={1.5}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <CalendarMonthIcon color="action" fontSize="small" />
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  공연기간
+                </Typography>
+                <Typography variant="body2">
+                  {formatDateRange(performanceDetail.startDate, performanceDetail.endDate)}
                 </Typography>
               </Box>
-            </Stack>
+            </Box>
 
-            <Divider sx={{ my: 2 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <LocationOnIcon color="action" fontSize="small" />
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  공연장
+                </Typography>
+                <Typography variant="body2">
+                  {performanceDetail.performanceHall?.name || '-'}
+                </Typography>
+              </Box>
+            </Box>
 
-            <Stack spacing={2}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <CalendarMonthIcon color="action" />
+            {performanceDetail.runningTime && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <TimerIcon color="action" fontSize="small" />
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    날짜
+                    공연시간
                   </Typography>
-                  <Typography variant="body1">{currentEvent.date}</Typography>
+                  <Typography variant="body2">
+                    {formatRunningTime(performanceDetail.runningTime)}
+                  </Typography>
                 </Box>
               </Box>
+            )}
+          </Stack>
+        </Box>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <AccessTimeIcon color="action" />
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    시간
-                  </Typography>
-                  <Typography variant="body1">{currentEvent.time}</Typography>
-                </Box>
-              </Box>
+        {/* 날짜 선택 섹션 */}
+        {performanceDetail.availableDates && performanceDetail.availableDates.length > 0 && (
+          <Box
+            sx={{
+              mb: 3,
+              p: 2,
+              borderRadius: 2,
+              bgcolor: 'background.paper',
+              boxShadow: 1,
+            }}
+          >
+            <Typography variant="h4" sx={{ mb: 2 }}>
+              날짜 선택
+            </Typography>
+            <ToggleButtonGroup
+              value={selectedDate}
+              exclusive
+              onChange={handleDateChange}
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1,
+                '& .MuiToggleButton-root': {
+                  borderRadius: 1,
+                  border: 1,
+                  borderColor: 'divider',
+                  px: 2,
+                  py: 1,
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    borderColor: 'primary.main',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                  },
+                },
+              }}
+            >
+              {performanceDetail.availableDates.map((date) => {
+                const dateObj = new Date(date);
+                const dayStr = dateObj.toLocaleDateString('ko-KR', { weekday: 'short' });
+                const dateStr = dateObj.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <LocationOnIcon color="action" />
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    장소
-                  </Typography>
-                  <Typography variant="body1">{currentEvent.venue}</Typography>
-                </Box>
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
-
-        {/* 회차 선택 섹션 */}
-        {schedules.length > 0 && (
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h4" sx={{ mb: 2 }}>
-                회차 선택
-              </Typography>
-              <RadioGroup value={selectedSchedule} onChange={handleScheduleChange}>
-                <Stack spacing={1}>
-                  {schedules.map((schedule) => {
-                    const statusInfo = getStatusLabel(schedule.status);
-                    const isAvailable = schedule.status === 'AVAILABLE';
-                    const dateStr = schedule.performanceDate
-                      ? new Date(schedule.performanceDate).toLocaleDateString('ko-KR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          weekday: 'short',
-                        })
-                      : '';
-
-                    return (
-                      <Box
-                        key={schedule.scheduleId}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          p: 1.5,
-                          borderRadius: 1,
-                          border: 1,
-                          borderColor: selectedSchedule === String(schedule.scheduleId) ? 'primary.main' : 'divider',
-                          bgcolor: selectedSchedule === String(schedule.scheduleId) ? 'action.selected' : 'transparent',
-                          opacity: isAvailable ? 1 : 0.6,
-                          cursor: isAvailable ? 'pointer' : 'not-allowed',
-                          transition: 'all 0.2s',
-                        }}
-                        onClick={() => isAvailable && setSelectedSchedule(String(schedule.scheduleId))}
-                      >
-                        <FormControlLabel
-                          value={String(schedule.scheduleId)}
-                          control={<Radio disabled={!isAvailable} />}
-                          label={
-                            <Box>
-                              <Typography variant="body1" fontWeight={500}>
-                                {schedule.PerformanceNo ? `${schedule.PerformanceNo}회차` : dateStr}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {dateStr} {schedule.startTime || ''}
-                              </Typography>
-                            </Box>
-                          }
-                          sx={{ flex: 1, m: 0 }}
-                        />
-                        <Chip
-                          label={statusInfo.label}
-                          color={statusInfo.color}
-                          size="small"
-                          variant={isAvailable ? 'filled' : 'outlined'}
-                        />
-                      </Box>
-                    );
-                  })}
-                </Stack>
-              </RadioGroup>
-            </CardContent>
-          </Card>
+                return (
+                  <ToggleButton key={date} value={date}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="body2" fontWeight={500}>
+                        {dateStr}
+                      </Typography>
+                      <Typography variant="caption" color="inherit">
+                        ({dayStr})
+                      </Typography>
+                    </Box>
+                  </ToggleButton>
+                );
+              })}
+            </ToggleButtonGroup>
+          </Box>
         )}
 
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
+        {/* 회차 선택 섹션 */}
+        {selectedDate && filteredSchedules.length > 0 && (
+          <Box
+            sx={{
+              mb: 3,
+              p: 2,
+              borderRadius: 2,
+              bgcolor: 'background.paper',
+              boxShadow: 1,
+            }}
+          >
             <Typography variant="h4" sx={{ mb: 2 }}>
-              좌석 정보
+              회차 선택
             </Typography>
-            <Stack spacing={1}>
-              {(sections.length > 0 ? sections : defaultSeatSections).map((section) => (
-                <Box
-                  key={section.id}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    p: 1.5,
-                    borderRadius: 1,
-                    border: 1,
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <RadioGroup value={selectedSchedule} onChange={handleScheduleChange}>
+              <Stack spacing={1}>
+                {filteredSchedules.map((schedule) => {
+                  const statusInfo = getStatusLabel(schedule.status);
+                  const isAvailable = schedule.status === 'AVAILABLE';
+
+                  return (
                     <Box
+                      key={schedule.scheduleId}
                       sx={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: '50%',
-                        bgcolor: section.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        p: 1.5,
+                        borderRadius: 1,
+                        border: 1,
+                        borderColor: selectedSchedule === String(schedule.scheduleId) ? 'primary.main' : 'divider',
+                        bgcolor: selectedSchedule === String(schedule.scheduleId) ? 'action.selected' : 'transparent',
+                        opacity: isAvailable ? 1 : 0.6,
+                        cursor: isAvailable ? 'pointer' : 'not-allowed',
+                        transition: 'all 0.2s',
                       }}
-                    />
-                    <Typography variant="body1">{section.name}</Typography>
-                  </Box>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant="body1" fontWeight={600}>
-                      {section.price.toLocaleString()}원
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      잔여 {section.availableSeats}석
-                    </Typography>
-                  </Box>
+                      onClick={() => isAvailable && setSelectedSchedule(String(schedule.scheduleId))}
+                    >
+                      <FormControlLabel
+                        value={String(schedule.scheduleId)}
+                        control={<Radio disabled={!isAvailable} />}
+                        label={
+                          <Box>
+                            <Typography variant="body1" fontWeight={500}>
+                              {schedule.PerformanceNo ? `${schedule.PerformanceNo}회차` : schedule.startTime || '시간 미정'}
+                            </Typography>
+                            {schedule.startTime && schedule.PerformanceNo && (
+                              <Typography variant="caption" color="text.secondary">
+                                {schedule.startTime}
+                              </Typography>
+                            )}
+                          </Box>
+                        }
+                        sx={{ flex: 1, m: 0 }}
+                      />
+                      <Chip
+                        label={statusInfo.label}
+                        color={statusInfo.color}
+                        size="small"
+                        variant={isAvailable ? 'filled' : 'outlined'}
+                      />
+                    </Box>
+                  );
+                })}
+              </Stack>
+            </RadioGroup>
+          </Box>
+        )}
+
+        {/* 좌석 정보 */}
+        <Box
+          sx={{
+            mb: 3,
+            p: 2,
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            boxShadow: 1,
+          }}
+        >
+          <Typography variant="h4" sx={{ mb: 2 }}>
+            좌석 정보
+          </Typography>
+          <Stack spacing={1}>
+            {(sections.length > 0 ? sections : defaultSeatSections).map((section) => (
+              <Box
+                key={section.id}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  p: 1.5,
+                  borderRadius: 1,
+                  border: 1,
+                  borderColor: 'divider',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      bgcolor: section.color,
+                    }}
+                  />
+                  <Typography variant="body1">{section.name}</Typography>
                 </Box>
-              ))}
-            </Stack>
-          </CardContent>
-        </Card>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography variant="body1" fontWeight={600}>
+                    {section.price.toLocaleString()}원
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    잔여 {section.availableSeats}석
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Stack>
+        </Box>
 
         {/* 버튼 영역 */}
         <Stack spacing={2}>
           <GradientButton
             fullWidth
             onClick={handleBooking}
-            disabled={schedules.length > 0 && !isBookingEnabled}
+            disabled={!selectedDate || !isBookingEnabled}
             sx={{ py: 2 }}
           >
             {getCategoryButtonText(eventCategory)}
